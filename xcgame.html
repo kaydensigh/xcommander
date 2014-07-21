@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html class="fill">
+  <head>
+    <script type="text/javascript" src="box2d.js"></script>
+    <script type="text/javascript" src="ivank.js"></script>
+    <script type="text/javascript" src="bib.js"></script>
+    <style>
+      body {
+        background-color: black;
+        color: grey;
+      }
+      .fill {
+        padding: 0;
+        width: 100%;
+        height: 100%;
+      }
+      .row {
+        display: flex;
+        justify-content: space-between;
+      }
+      .column {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        width: 80px;
+      }
+      .p1 {
+        color: rgb(131, 164, 0);
+      }
+      .p2 {
+        color: rgb(217, 184, 0);
+      }
+      .p3 {
+        color: rgb(64, 208, 255);
+      }
+      .p4 {
+        color: rgb(255, 122, 250);
+      }
+      .major {
+        margin: 5px 5px 5px 5px;
+        font-size: 4em;
+        font-weight: bold;
+        text-align: right;
+      }
+      .minor {
+        margin: 5px 5px 5px 5px;
+        font-size: 1.5em;
+        font-weight: bold;
+        text-align: right;
+      }
+      .health, .stats {
+        display: none;
+      }
+      #canvasdiv {
+        flex-grow: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        align-content: center;
+      }
+      #c {
+        background-color: white;
+      }
+    </style>
+  </head>
+  <body class="fill">
+    <div class="fill row">
+      <div class="column">
+        <div>
+          <div class="health" id="p1HealthDiv">
+            <div>Health:</div>
+            <div class="p1 major" id="p1Health">60</div>
+          </div>
+          <div class="stats" id="p1StatsDiv">
+            <div>Ship damage:</div>
+            <div class="p1 minor" id="p1ShipDamage">0</div>
+            <div>Land damage:</div>
+            <div class="p1 minor" id="p1LandDamage">0</div>
+            <div>Enemy bullets destroyed:</div>
+            <div class="p1 minor" id="p1BulletsDestroyed">0</div>
+          </div>
+        </div>
+        <div>
+          <div class="health" id="p3HealthDiv">
+            <div>Health:</div>
+            <div class="p3 major" id="p3Health">60</div>
+          </div>
+          <div class="stats" id="p3StatsDiv">
+            <div>Ship damage:</div>
+            <div class="p3 minor" id="p3ShipDamage">0</div>
+            <div>Land damage:</div>
+            <div class="p3 minor" id="p3LandDamage">0</div>
+            <div>Enemy bullets destroyed:</div>
+            <div class="p3 minor" id="p3BulletsDestroyed">0</div>
+          </div>
+        </div>
+      </div>
+      <div id="canvasdiv"><canvas id="c"></div>
+      <div class="column">
+        <div>
+          <div class="health" id="p2HealthDiv">
+            <div>Health:</div>
+            <div class="p2 major" id="p2Health">60</div>
+          </div>
+          <div class="stats" id="p2StatsDiv">
+            <div>Ship damage:</div>
+            <div class="p2 minor" id="p2ShipDamage">0</div>
+            <div>Land damage:</div>
+            <div class="p2 minor" id="p2LandDamage">0</div>
+            <div>Enemy bullets destroyed:</div>
+            <div class="p2 minor" id="p2BulletsDestroyed">0</div>
+          </div>
+        </div>
+        <div>
+          <div class="health" id="p4HealthDiv">
+            <div>Health:</div>
+            <div class="p4 major" id="p4Health">60</div>
+          </div>
+          <div class="stats" id="p4StatsDiv">
+            <div>Ship damage:</div>
+            <div class="p4 minor" id="p4ShipDamage">0</div>
+            <div>Land damage:</div>
+            <div class="p4 minor" id="p4LandDamage">0</div>
+            <div>Enemy bullets destroyed:</div>
+            <div class="p4 minor" id="p4BulletsDestroyed">0</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script type="text/javascript" src="xcgame.js"></script>
+  </body>
+</html>
