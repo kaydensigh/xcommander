@@ -84,7 +84,7 @@ BIB.World = function (canvasId) {
   // This needs to be done before creating the Stage as the stage will resize
   // itself based on the canvas.
   this.resizeCanvas();
-  window.addEventListener("resize", function () { that.resizeCanvas(); });
+  window.addEventListener('resize', function () { that.resizeCanvas(); });
 
   // Create IvanK stage. Required to load images.
   this.stage = new Stage(canvasId);

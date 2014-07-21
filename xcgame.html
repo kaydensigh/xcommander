@@ -58,8 +58,14 @@
         align-items: center;
         align-content: center;
       }
-      #c {
+      #background {
         background-color: white;
+        position: absolute;
+        z-index: 1;
+      }
+      #c {
+        position: absolute;
+        z-index: 2;
       }
     </style>
   </head>
@@ -95,7 +101,10 @@
           </div>
         </div>
       </div>
-      <div id="canvasdiv"><canvas id="c"></div>
+      <div id="canvasdiv">
+        <canvas id="background"></canvas>
+        <canvas id="c"></canvas>
+        </div>
       <div class="column">
         <div>
           <div class="health" id="p2HealthDiv">

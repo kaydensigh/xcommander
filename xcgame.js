@@ -3,6 +3,9 @@
 // Loaded in by outer window.
 var playerCount = 0;
 var mapData = [];
+var tiles = [];
+var backgroundCanvasContext =
+    document.getElementById('background').getContext('2d');
 
 var world;
 var players = [];
@@ -40,6 +43,28 @@ function start() {
   world = new BIB.World('c');
   world.setViewSize([80, 60]);
   world.setViewPosition([39.5, 29.5]);
+
+  var resize = function () {
+    var canvas = document.getElementById('c');
+    var backCanvas = document.getElementById('background');
+    backCanvas.width = canvas.width;
+    backCanvas.height = canvas.height;
+    backCanvas.style.width = canvas.width + 'px';
+    backCanvas.style.height = canvas.height + 'px';
+
+    var canvasDiv = document.getElementById('canvasdiv');
+    var horizontalSpace = canvasDiv.offsetWidth - canvas.offsetWidth;
+    var verticalSpace = canvasDiv.offsetHeight - canvas.offsetHeight;
+    var left = (canvasDiv.offsetLeft + 0.5 * horizontalSpace) + 'px';
+    var top = (canvasDiv.offsetTop + 0.5 * verticalSpace)+ 'px';
+    canvas.style.left = left;
+    canvas.style.top = top;
+    backCanvas.style.left = left;
+    backCanvas.style.top = top;
+    drawBackgroundCanvas();
+  };
+  resize();
+  window.addEventListener('resize', resize);
 
   var descriptors = {
     animations: [
@@ -148,7 +173,7 @@ function start() {
         fixtures: [
           {
             shapeType: 'box',
-            shapeData: 0.4,
+            shapeData: 0.5,
           },
         ],
       },
@@ -202,16 +227,13 @@ function setup() {
   world.newThing('barrier', { position: [-1, 30], scale: [1, 62] });
   world.newThing('barrier', { position: [80, 30], scale: [1, 62] });
 
+  drawBackgroundCanvas();
+  tiles = new Array(mapData.length);
   for (var x = 0; x < 80; x++) {
     for (var y = 0; y < 60; y++) {
-      var tileColor = mapData[x + y * 80];
-      if (tileColor === 0) {
+      makeWallIfNecessary(x, y);
+      if (mapData[x + y * 80] === 0)
         emptyTiles.push([x, y]);
-        continue;
-      }
-
-      var tile = world.newThing('wall', { position: [x, y] });
-      tile.actor.setFrame(tileColor);
     }
   }
 
@@ -221,6 +243,49 @@ function setup() {
   window.addEventListener('keyup', keyUp);
 
   world.onEnterFrameActions = duringGame;
+}
+
+function drawBackgroundCanvas() {
+  var canvas = document.getElementById('c');
+  backgroundCanvasContext.clearRect(0, 0, canvas.width, canvas.height);
+  for (var x = 0; x < 80; x++) {
+    for (var y = 0; y < 60; y++) {
+      drawBackgroundCanvasAt(x, y);
+    }
+  }
+}
+
+function drawBackgroundCanvasAt(x, y) {
+  var color = mapData[x + y * 80];
+  var backCanvas = document.getElementById('background');
+  var size = backCanvas.width / 80;
+  backgroundCanvasContext.clearRect(
+      (size * x) | 0, (size * y) | 0, (size + 1) | 0, (size + 1) | 0);
+  if (color !== 0) {
+    backgroundCanvasContext.fillStyle = getFillStyle(color);
+    backgroundCanvasContext.fillRect(
+        (size * x) | 0, (size * y) | 0, (size + 1) | 0, (size + 1) | 0);
+  }
+}
+
+function makeWallIfNecessary(x, y) {
+  var tileColor = mapData[x + y * 80];
+  if (tileColor === 0)
+    return;
+
+  var existingTile = tiles[x + y * 80];
+  var isExposed =
+      mapData[x-1 + (y-1) * 80] === 0 || mapData[x+1 + (y+1) * 80] === 0 ||
+      mapData[x-1 + y * 80] === 0     || mapData[x+1 + y * 80] === 0 ||
+      mapData[x + (y-1) * 80] === 0   || mapData[x + (y+1) * 80] === 0 ||
+      mapData[x-1 + (y+1) * 80] === 0 || mapData[x+1 + (y-1) * 80] === 0;
+
+  if (isExposed && !existingTile) {
+    // Create a real wall.
+    var tile = world.newThing('wall', { position: [x, y] });
+    tile.actor.setFrame(tileColor);
+    tiles[x + y * 80] = tile;
+  }
 }
 
 function makePlayer(startPosition, index) {
@@ -307,6 +372,16 @@ function destroyWall(wall, bulletPosition) {
   var velocity = wallPosition.Clone();
   velocity.SelfSub(bulletPosition);
   makeDebris(0.5, wallPosition, velocity, color, 2);
+  var x = wallPosition.x | 0;
+  var y = wallPosition.y | 0;
+  mapData[x + y * 80] = 0;
+  for (var i = x - 1; i <= x + 1; i++) {
+    for (var j = y - 1; j <= y + 1; j++) {
+      makeWallIfNecessary(i, j);
+    }
+  }
+  drawBackgroundCanvasAt(x, y);
+  emptyTiles.push([x, y]);
 }
 
 function hitBarrier(bullet, barrier) {
@@ -429,8 +504,9 @@ function dropWeapons() {
   weaponDrop++;
   if (weaponDrop >= 600 && totalWeapons < totalPlayers) {
     weaponDrop = 0;
+    var emptyTile = emptyTiles[(emptyTiles.length * Math.random()) | 0];
     var weapon = world.newThing('weapon', {
-      position: [80 * Math.random(), 60 * Math.random()],
+      position: [emptyTile[0], emptyTile[1]],
       depth: 1,
     });;
     weapon.actor.alpha = 0.03;
@@ -770,6 +846,25 @@ function showCounter(index, type, show) {
 function indexOfMinimum(bestIndexSoFar, currentValue, currentIndex, array) {
   return currentValue < array[bestIndexSoFar] ? currentIndex : bestIndexSoFar;
 }
+
+function getFillStyle(value) {
+  var color = colors[value];
+  return 'rgba(' +
+         color[0] + ', ' +
+         color[1] + ', ' +
+         color[2] + ', 0.5)';
+}
+
+var colors = [
+  [255, 255, 255],  // clear
+  [  0,   0,   0],  // black
+  [ 80, 166,  69],  // green
+  [214, 116,   0],  // orange
+  [199,  46,  30],  // red
+  [135, 196, 207],  // blue
+  [208, 206, 125],  // yellow
+  [ 68,  30,  26],  // brown
+];
 
 function keyDown(event) {
   keyPressed[event.keyCode] = 1;

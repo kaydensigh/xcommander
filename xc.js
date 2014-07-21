@@ -77,7 +77,7 @@ function renderPng(fileName, fileData) {
 
   var png = new Image();
   png.src = fileData;
-  context.drawImage(png, 0, 0);
+  context.drawImage(png);
 }
 
 function saveMap() {
