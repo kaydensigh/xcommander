@@ -1,12 +1,13 @@
 'use strict';
 
 // Loaded in by outer window.
+var gamepadManager = null;
 var playerCount = 0;
 var mapData = [];
+
 var tiles = [];
 var backgroundCanvasContext =
     document.getElementById('background').getContext('2d');
-
 var world;
 var players = [];
 var totalPlayers = 0;
@@ -608,7 +609,10 @@ function trail(player, index) {
 }
 
 function thrust(player, index) {
-  if (!keyPressed[thrustKeys[index]]) {
+  var gamepad = gamepadManager.gamepads[playerCount - index - 1];
+  var pressed = keyPressed[thrustKeys[index]] ||
+                (gamepad && gamepad.buttons[3]);
+  if (!pressed) {
     player.thrust.actor.alpha = 0;
     return;
   }
@@ -627,6 +631,10 @@ function thrust(player, index) {
 
 function rotate(player, index) {
   var delta = keyPressed[rightKeys[index]] - keyPressed[leftKeys[index]];
+  var gamepad = gamepadManager.gamepads[playerCount - index - 1];
+  if (gamepad) {
+    delta += gamepad.buttons[1] - gamepad.buttons[2];
+  }
   if (delta !== 0) {
     player.body.ApplyTorque(2000 * delta);
   }

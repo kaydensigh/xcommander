@@ -172,8 +172,25 @@ function selectMap(event) {
 }
 
 function selectPlayers(event) {
-  var playerCount = event.target.textContent.match(/^(\d)/)[1];
+  try {
+    playerCount = event.target.textContent.match(/^(\d)/)[1];
+  } catch (e) {}
   document.getElementById('players').src = 'keyboard' + playerCount + '.png';
+  [0, 1, 2, 3].forEach(function (index) {
+    var gamepadIndex = playerCount - index - 1;
+    var gamepadLeft = document.getElementById('player' + index + 'gamepadleft');
+    var gamepadRight =
+        document.getElementById('player' + index + 'gamepadright');
+    if (gamepadManager.gamepads[gamepadIndex]) {
+      gamepadLeft.src = 'gamepadleft' + (gamepadIndex + 1) + '.png';
+      gamepadRight.src = 'gamepadright' + (index + 1) + '.png';
+      gamepadLeft.style.visibility = 'visible';
+      gamepadRight.style.visibility = 'visible';
+    } else {
+      gamepadLeft.style.visibility = 'hidden';
+      gamepadRight.style.visibility = 'hidden';
+    }
+  });
 }
 
 function start() {
@@ -189,6 +206,7 @@ function start() {
       getMapData(gameWindow.contentWindow.mapData);
       gameWindow.contentWindow.playerCount =
           document.getElementById('players').src.match(/keyboard(\d)/)[1];
+      gameWindow.contentWindow.gamepadManager = gamepadManager;
     });
   });
 }
@@ -224,3 +242,11 @@ document.getElementById('2Players').addEventListener('click', selectPlayers);
 document.getElementById('3Players').addEventListener('click', selectPlayers);
 document.getElementById('4Players').addEventListener('click', selectPlayers);
 document.getElementById('start').addEventListener('click', start);
+
+var playerCount = 2;
+var gamepadManager = new Gamepad();
+gamepadManager.init();
+
+gamepadManager.bind(Gamepad.Event.CONNECTED, selectPlayers);
+gamepadManager.bind(Gamepad.Event.DISCONNECTED, selectPlayers);
+selectPlayers();

@@ -47,6 +47,17 @@
       h3 {
         margin: 0;
       }
+      span {
+        margin: 5px;
+        width: 80px;
+        height: 55px;
+      }
+      .gamepad {
+        float: left;
+        width: 40px;
+        height: 55px;
+        visibility: hidden;
+      }
     </style>
   </head>
   <body class="fill">
@@ -101,18 +112,36 @@
       <div class="row">
         <div class="column">
           <img class="keyboard" id="players" src="keyboard2.png">
-          <div class="row buttons">
-            <button id="2Players">2 players</button>
-            <button id="3Players">3 players</button>
-            <button id="4Players">4 players</button>
+          <div class="row">
+            <span>
+              <img class="gamepad" id="player0gamepadleft">
+              <img class="gamepad" id="player0gamepadright">
+            </span>
+            <span>
+              <img class="gamepad" id="player2gamepadleft">
+              <img class="gamepad" id="player2gamepadright">
+            </span>
+            <span></span>
+            <span>
+              <img class="gamepad" id="player1gamepadleft">
+              <img class="gamepad" id="player1gamepadright">
+            </span>
+            <span>
+              <img class="gamepad" id="player3gamepadleft">
+              <img class="gamepad" id="player3gamepadright">
+            </span>
           </div>
         </div>
-        <div class="column">
+        <div class="column buttons">
+          <button id="2Players">2 players</button>
+          <button id="3Players">3 players</button>
+          <button id="4Players">4 players</button>
           <button id="start"><h1>Start</h1></button>
         </div>
       </div>
     </div>
 
+    <script type="text/javascript" src="gamepad.min.js"></script>
     <script type="text/javascript" src="xc.js"></script>
   </body>
 </html>
