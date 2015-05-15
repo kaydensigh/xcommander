@@ -77,13 +77,13 @@ function renderPng(fileName, fileData) {
 
   var png = new Image();
   png.src = fileData;
-  context.drawImage(png);
+  context.drawImage(png, 0, 0);
 }
 
 function saveMap() {
   chrome.fileSystem.chooseEntry({
     type:'saveFile',
-    suggestedName: title.value + '  ' + author.value,
+    suggestedName: title.value + '  ' + author.value + '.map',
     accepts: [{
       description: 'XCommander map file.',
       extensions: ['map'],
@@ -95,7 +95,7 @@ function saveMap() {
 function savePng() {
   chrome.fileSystem.chooseEntry({
     type:'saveFile',
-    suggestedName: title.value + '  ' + author.value,
+    suggestedName: title.value + '  ' + author.value + '.png',
     accepts: [{
       description: 'PNG image file.',
       extensions: ['png'],
@@ -105,7 +105,7 @@ function savePng() {
 }
 
 function writeFile(fileEntry) {
-  var type = fileEntry.fullPath.toLowerCase().match(/\.(\w\w\w)$/)[1];
+  var isMap = fileEntry.fullPath.slice(-4) == '.map';
   var errorHandler = function (e) {
       console.log('Error writing file: ' + fileEntry.fullPath);
       console.log(e.toString());
@@ -118,9 +118,9 @@ function writeFile(fileEntry) {
     writer.onerror = errorHandler;
 
     writer.seek(0);
-    if (type == 'map')
+    if (isMap)
       writer.write(getCanvasAsMap());
-    else if (type == 'png')
+    else
       writer.write(getCanvasAsPng());
   }, errorHandler);
 }
