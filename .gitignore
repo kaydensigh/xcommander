@@ -1,5 +1,10 @@
+_config.yml
 _site
 .sass-cache
 .jekyll-cache
 .jekyll-metadata
+Gemfile
+Gemfile.lock
+gemfiles
+node_modules
 vendor
