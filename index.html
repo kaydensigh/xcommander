@@ -74,6 +74,10 @@
             margin: 0;
         }
 
+        .gamepad-flex {
+            justify-content: space-between;
+        }
+
         .gamepad-container {
             margin: 5px;
             width: 80px;
@@ -143,6 +147,8 @@
                 <div class="buttons">
                     <button id="openMap">Import .map</button>
                     <button id="openPng">Import .png</button>
+                    <input type="file" id="importMapInput" accept=".map,.MAP" style="display:none">
+                    <input type="file" id="importPngInput" accept=".png" style="display:none">
                 </div>
                 <div>
                     <h3>Title:</h3>
@@ -155,6 +161,7 @@
                 <div class="buttons">
                     <button id="saveMap">Export .map</button>
                     <button id="savePng">Export .png</button>
+                    <a id="exportLink" style="display:none"></a>
                 </div>
             </div>
         </div>
@@ -162,7 +169,7 @@
         <div class="row">
             <div class="column">
                 <img class="keyboard" id="players" src="keyboard2.png">
-                <div class="row">
+                <div class="row gamepad-flex">
                     <span class="gamepad-container">
                         <img class="gamepad" id="player0gamepadleft">
                         <img class="gamepad" id="player0gamepadright">

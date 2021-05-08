@@ -1,47 +1,33 @@
 'use strict';
 
 function openMap() {
-  chrome.fileSystem.chooseEntry({
-    type:'openFile',
-    accepts: [{
-      description: 'XCommander map file.',
-      extensions: ['map'],
-    }],
-    acceptsAllTypes: false,
-  }, readFile);
+  document.getElementById('importMapInput').click();
 }
 
 function openPng() {
-  chrome.fileSystem.chooseEntry({
-    type:'openFile',
-    accepts: [{
-      description: 'PNG image file.',
-      extensions: ['png'],
-    }],
-    acceptsAllTypes: false,
-  }, readFile);
+  document.getElementById('importPngInput').click();
 }
 
-function readFile(fileEntry) {
-  var type = fileEntry.fullPath.toLowerCase().match(/\.(\w\w\w)$/)[1];
-  fileEntry.file(function (file) {
-    var reader = new FileReader();
-    reader.onloadend = function (e) {
-      if (type == 'map') {
-        renderMap(reader.result);
-      } else if (type == 'png') {
-        renderPng(fileEntry.fullPath.match(/([^\/]+)\.\w\w\w$/)[1],
-                  reader.result);
-      }
-      console.log('Load complete: ' + fileEntry.fullPath);
-    };
-    if (type == 'map')
-      reader.readAsText(file);
-    else if (type == 'png')
-      reader.readAsDataURL(file);
-  }, function () {
-    console.log('Error reading file: ' + fileEntry.fullPath);
-  });
+function readFile() {
+  var file = this.files[0];
+  var type = file.name.toLowerCase().match(/\.(\w\w\w)$/)[1];
+  var reader = new FileReader();
+  reader.onerror = function () {
+    console.log('Error reading file: ' + file.name);
+  }
+  reader.onload = function () {
+    if (type == 'map') {
+      renderMap(reader.result);
+    } else if (type == 'png') {
+      renderPng(file.name.match(/([^\/]+)\.\w\w\w$/)[1],
+                reader.result);
+    }
+    console.log('Load complete: ' + file.name);
+  };
+  if (type == 'map')
+    reader.readAsText(file);
+  else if (type == 'png')
+    reader.readAsDataURL(file);
 }
 
 function renderMap(fileData) {
@@ -71,58 +57,30 @@ function getFillStyle(value) {
 }
 
 function renderPng(fileName, fileData) {
+  console.log(fileData);
   var parts = (fileName + '  ').split('  ');
   title.value = parts[0];
   author.value = parts[1];
 
   var png = new Image();
   png.src = fileData;
-  context.drawImage(png, 0, 0);
+  png.onload = function () {
+    context.drawImage(png, 0, 0);
+  }
 }
 
 function saveMap() {
-  chrome.fileSystem.chooseEntry({
-    type:'saveFile',
-    suggestedName: title.value + '  ' + author.value + '.map',
-    accepts: [{
-      description: 'XCommander map file.',
-      extensions: ['map'],
-    }],
-    acceptsAllTypes: false,
-  }, writeFile);
+  var a = document.getElementById('exportLink');
+  a.href = URL.createObjectURL(getCanvasAsMap());
+  a.download = title.value + '  ' + author.value + '.map';
+  a.click()
 }
 
 function savePng() {
-  chrome.fileSystem.chooseEntry({
-    type:'saveFile',
-    suggestedName: title.value + '  ' + author.value + '.png',
-    accepts: [{
-      description: 'PNG image file.',
-      extensions: ['png'],
-    }],
-    acceptsAllTypes: false,
-  }, writeFile);
-}
-
-function writeFile(fileEntry) {
-  var isMap = fileEntry.fullPath.slice(-4) == '.map';
-  var errorHandler = function (e) {
-      console.log('Error writing file: ' + fileEntry.fullPath);
-      console.log(e.toString());
-    };
-
-  fileEntry.createWriter(function (writer) {
-    writer.onwriteend = function () {
-      console.log('Write complete: ' + fileEntry.fullPath);
-    };
-    writer.onerror = errorHandler;
-
-    writer.seek(0);
-    if (isMap)
-      writer.write(getCanvasAsMap());
-    else
-      writer.write(getCanvasAsPng());
-  }, errorHandler);
+  var a = document.getElementById('exportLink');
+  a.href = URL.createObjectURL(getCanvasAsPng());
+  a.download = title.value + '  ' + author.value + '.png';
+  a.click()
 }
 
 function getCanvasAsMap() {
@@ -235,6 +193,8 @@ var gameWindow;
 document.getElementById('mapList').addEventListener('click', selectMap);
 document.getElementById('openMap').addEventListener('click', openMap);
 document.getElementById('openPng').addEventListener('click', openPng);
+document.getElementById('importMapInput').addEventListener('change', readFile, false);
+document.getElementById('importPngInput').addEventListener('change', readFile, false);
 document.getElementById('saveMap').addEventListener('click', saveMap);
 document.getElementById('savePng').addEventListener('click', savePng);
 
