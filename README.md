@@ -1,3 +1,5 @@
+<img src="/misc/promo.png">
+
 2-4 player arcade shooter.
 Shoot down your opponents with 5 different weapons. Supports up to 4 players on keyboard or gamepad.
 
