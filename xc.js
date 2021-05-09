@@ -87,17 +87,15 @@ function renderPng(fileName, fileData) {
 
 // Save to original XCommander .MAP format.
 function saveMap() {
-  var a = document.getElementById('exportLink');
-  a.href = URL.createObjectURL(getCanvasAsMap());
-  a.download = title.value + '  ' + author.value + '.map';
-  a.click()
+  exportLink.href = URL.createObjectURL(getCanvasAsMap());
+  exportLink.download = title.value + '  ' + author.value + '.map';
+  exportLink.click()
 }
 
 function savePng() {
-  var a = document.getElementById('exportLink');
-  a.href = URL.createObjectURL(getCanvasAsPng());
-  a.download = title.value + '  ' + author.value + '.png';
-  a.click()
+  exportLink.href = URL.createObjectURL(getCanvasAsPng());
+  exportLink.download = title.value + '  ' + author.value + '.png';
+  exportLink.click()
 }
 
 function getCanvasAsMap() {
@@ -186,6 +184,7 @@ function setupPlayers() {
 
 var title = document.getElementById('title');
 var author = document.getElementById('author');
+var exportLink = document.getElementById('exportLink');
 var canvas = document.getElementById('c');
 canvas.width = 80;
 canvas.height = 60;
@@ -193,6 +192,8 @@ var context = canvas.getContext('2d');
 context.fillStyle = colorFillStyle[0];
 context.fillRect(0, 0, 80, 60);
 
+title.addEventListener('change', updateTitleAuthorInURL);
+author.addEventListener('change', updateTitleAuthorInURL);
 document.getElementById('mapList').addEventListener('click', selectMap);
 document.getElementById('openMap').addEventListener('click', openMap);
 document.getElementById('openPng').addEventListener('click', openPng);

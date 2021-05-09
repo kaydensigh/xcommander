@@ -65,14 +65,30 @@ function getMapData(output) {
   }
 }
 
-// Update the `map` URL param.
+// Put the map in the URL fragment.
 function updateMapInURL() {
   var data = [];
   getMapData(data);
   url.hash = urlFromMapData(data);
-  url.searchParams.set('t', title.value);
-  url.searchParams.set('a', author.value);
   window.history.pushState({ path: url.href }, '', url.href);
+  updateTitleAuthorInURL();
+}
+
+function updateTitleAuthorInURL() {
+  var t = url.searchParams.get('t');
+  var a = url.searchParams.get('a');
+
+  var changed = false;
+  if (t != title.value) {
+    url.searchParams.set('t', title.value);
+    changed = true;
+  }
+  if (a != author.value) {
+    url.searchParams.set('a', author.value);
+    changed = true;
+  }
+  if (changed)
+    window.history.replaceState({ path: url.href }, '', url.href);
 }
 
 function getURLData() {
