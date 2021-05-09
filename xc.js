@@ -173,11 +173,11 @@ function setupPlayers() {
     if (gamepadManager.gamepads[gamepadIndex]) {
       gamepadLeft.src = 'gamepadleft' + (gamepadIndex + 1) + '.png';
       gamepadRight.src = 'gamepadright' + (index + 1) + '.png';
-      gamepadLeft.style.visibility = 'visible';
-      gamepadRight.style.visibility = 'visible';
+      gamepadLeft.style.display = 'initial';
+      gamepadRight.style.display = 'initial';
     } else {
-      gamepadLeft.style.visibility = 'hidden';
-      gamepadRight.style.visibility = 'hidden';
+      gamepadLeft.style.display = 'none';
+      gamepadRight.style.display = 'none';
     }
   });
 }

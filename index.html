@@ -80,15 +80,13 @@
 
         .gamepad-container {
             margin: 5px;
-            width: 80px;
-            height: 55px;
         }
 
         .gamepad {
             float: left;
             width: 40px;
             height: 55px;
-            visibility: hidden;
+            display: none;
         }
     </style>
 </head>
@@ -144,6 +142,7 @@
             </div>
             <div id="canvasdiv"><canvas id="c"></div>
             <div class="column flex-start margin-lr">
+                <div class="row">Maps are 80x60 px.</div>
                 <div class="buttons">
                     <button id="openMap">Import .map</button>
                     <button id="openPng">Import .png</button>
@@ -190,6 +189,7 @@
                         <img class="gamepad" id="player3gamepadright">
                     </span>
                 </div>
+                <div>Press a button on a connected gamepad to enable it.</div>
             </div>
             <div class="column buttons">
                 <button id="2Players">2 players</button>
