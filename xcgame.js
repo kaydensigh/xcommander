@@ -12,12 +12,22 @@ var backgroundCanvasContext =
 var world;
 var players = [];
 var totalPlayers = 0;
+
+var viewSize = [80, 60];
+var centerX = 39.5, centerY = 29.5;
+function rotateStartPosition(pies) {
+  var x = -30, y = 0;
+  var theta = pies * Math.PI;
+  return [x * Math.cos(theta) - y * Math.sin(theta) + centerX,
+          x * Math.sin(theta) + y * Math.cos(theta) + centerY, 
+          theta];
+}
 var startPositions = {
-  '2': [[20, 30, 0], [61, 30, Math.PI]],
-  '3': [[28, 21, (1/6) * Math.PI], [52, 21, (5/6) * Math.PI],
-        [40, 45, -0.5 * Math.PI]],
-  '4': [[20, 10, 0], [61, 10, 0.5 * Math.PI],
-        [20, 51, -0.5 * Math.PI], [61, 51, Math.PI]],
+  '2': [rotateStartPosition(0), rotateStartPosition(1)],
+  '3': [rotateStartPosition(1/6), rotateStartPosition(5/6),
+        rotateStartPosition(9/6)],
+  '4': [rotateStartPosition(0.25), rotateStartPosition(1.25),
+        rotateStartPosition(1.75), rotateStartPosition(0.75)],
 };
 var emptyTiles = [];
 
@@ -43,8 +53,8 @@ function start() {
   }
 
   world = new BIB.World('c');
-  world.setViewSize([80, 60]);
-  world.setViewPosition([39.5, 29.5]);
+  world.setViewSize(viewSize);
+  world.setViewPosition([centerX, centerY]);
 
   var resize = function () {
     var canvas = document.getElementById('c');
