@@ -1,9 +1,10 @@
 'use strict';
 
-// Loaded in by outer window.
-var gamepadManager = null;
-var playerCount = 0;
-var mapData = [];
+var gamepadManager = new Gamepad();
+gamepadManager.init();
+
+var playerCount = parseInt(getPlayerCountString());
+var mapData = mapDataFromURL(getURLData());
 
 var tiles = [];
 var backgroundCanvasContext =
