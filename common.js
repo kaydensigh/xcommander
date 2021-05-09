@@ -145,7 +145,7 @@ function updatePlayerCount(p) {
 
 function startGame() {
   var path = url.pathname;
-  path = path.substring(0, path.lastIndexOf('/') - 1);
+  path = path.substring(0, path.lastIndexOf('/') + 1);
   url.pathname = path + 'xcgame.html';
   window.location.href = url.href;
 }
