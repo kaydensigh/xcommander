@@ -164,15 +164,15 @@ function setupPlayers() {
     return;
   }
 
-  document.getElementById('players').src = 'keyboard' + playerCountStr + '.png';
+  document.getElementById('players').src = 'sprites/keyboard' + playerCountStr + '.png';
   [0, 1, 2, 3].forEach(function (index) {
     var gamepadIndex = playerCountInt - index - 1;
     var gamepadLeft = document.getElementById('player' + index + 'gamepadleft');
     var gamepadRight =
         document.getElementById('player' + index + 'gamepadright');
     if (gamepadManager.gamepads[gamepadIndex]) {
-      gamepadLeft.src = 'gamepadleft' + (gamepadIndex + 1) + '.png';
-      gamepadRight.src = 'gamepadright' + (index + 1) + '.png';
+      gamepadLeft.src = 'sprites/gamepadleft' + (gamepadIndex + 1) + '.png';
+      gamepadRight.src = 'sprites/gamepadright' + (index + 1) + '.png';
       gamepadLeft.style.display = 'initial';
       gamepadRight.style.display = 'initial';
     } else {
