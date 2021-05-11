@@ -629,7 +629,7 @@ function trail(player, index) {
 function thrust(player, index) {
   var gamepad = gamepadManager.gamepads[playerCount - index - 1];
   var pressed = keyPressed[thrustKeys[index]] ||
-                (gamepad && gamepad.buttons[3]);
+                (gamepad && gamepad.buttons[3].pressed);
   if (!pressed) {
     player.thrust.actor.alpha = 0;
     return;
@@ -651,7 +651,7 @@ function rotate(player, index) {
   var delta = keyPressed[rightKeys[index]] - keyPressed[leftKeys[index]];
   var gamepad = gamepadManager.gamepads[playerCount - index - 1];
   if (gamepad) {
-    delta += gamepad.buttons[1] - gamepad.buttons[2];
+    delta += gamepad.buttons[1].value - gamepad.buttons[2].value;
   }
   if (delta !== 0) {
     player.body.ApplyTorque(2000 * delta);
