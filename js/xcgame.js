@@ -274,7 +274,7 @@ function drawBackgroundCanvasAt(x, y) {
   backgroundCanvasContext.clearRect(
       (size * x) | 0, (size * y) | 0, (size + 1) | 0, (size + 1) | 0);
   if (color !== 0) {
-    backgroundCanvasContext.fillStyle = getFillStyle(color);
+    backgroundCanvasContext.fillStyle = colorFillStyle[color];
     backgroundCanvasContext.fillRect(
         (size * x) | 0, (size * y) | 0, (size + 1) | 0, (size + 1) | 0);
   }
@@ -414,6 +414,13 @@ function explosionPlayer(explosion, player) {
 }
 
 function explosionBullet(explosion, bullet) {
+  var bulletPosition = bullet.body.GetPosition();
+  // Debris moves away from epicenter, depending on distance.
+  var velocity = bulletPosition.Clone();
+  velocity.SelfSub(explosion.body.GetPosition());
+  const explosionRadiusSquared = 6.3 * 6.3;
+  velocity.SelfMul(4 * (explosionRadiusSquared - velocity.GetLengthSquared()) / explosionRadiusSquared);
+  makeDebris(0.6, bulletPosition, velocity, bullet.actor.getFrame(), 5, 'bullet');
   if (!bullet.destroyed) {
     destroyBullet(bullet);
     bulletsDestroyed[explosion.actor.getFrame()].textContent++;
@@ -865,25 +872,6 @@ function showCounter(index, type, show) {
 function indexOfMinimum(bestIndexSoFar, currentValue, currentIndex, array) {
   return currentValue < array[bestIndexSoFar] ? currentIndex : bestIndexSoFar;
 }
-
-function getFillStyle(value) {
-  var color = colors[value];
-  return 'rgba(' +
-         color[0] + ', ' +
-         color[1] + ', ' +
-         color[2] + ', 0.5)';
-}
-
-var colors = [
-  [255, 255, 255],  // clear
-  [  0,   0,   0],  // black
-  [ 80, 166,  69],  // green
-  [214, 116,   0],  // orange
-  [199,  46,  30],  // red
-  [135, 196, 207],  // blue
-  [208, 206, 125],  // yellow
-  [ 68,  30,  26],  // brown
-];
 
 function keyDown(event) {
   keyPressed[event.keyCode] = 1;
