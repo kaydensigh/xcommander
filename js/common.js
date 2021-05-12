@@ -143,6 +143,77 @@ function updatePlayerCount(p) {
   window.history.replaceState({ path: url.href }, '', url.href);
 }
 
+// Default key mappings for 4 players, plus extra to use in case there are clashes.
+const defaultKeyMappings = [
+  'Digit2', 'Digit1', 'KeyQ',
+  'ArrowUp', 'ArrowLeft', 'ArrowRight',
+  'KeyF', 'KeyC', 'KeyV',
+  'NumpadMultiply', 'Numpad9', 'NumpadSubtract',
+  'Numpad5', 'Numpad1', 'Numpad3',
+  'Home', 'Delete', 'PageDown',
+  'KeyI', 'KeyJ', 'KeyL',
+  'KeyW', 'KeyA', 'KeyD',
+  'Equal', 'BracketLeft', 'BracketRight',
+  'KeyH', 'KeyB', 'KeyN',
+];
+
+function getRawKeyMappings() {
+  const keysFromURL = url.searchParams.get('k') || '';
+  let keys = keysFromURL.split(',');
+  for (let i = keys.length; i < 12; i++) keys.push('');
+  return [
+    { forward: keys[0], left: keys[1], right: keys[2] },
+    { forward: keys[3], left: keys[4], right: keys[5] },
+    { forward: keys[6], left: keys[7], right: keys[8] },
+    { forward: keys[9], left: keys[10], right: keys[11] },
+  ];
+}
+function validateKeyMappings() {
+  let keyMap = getRawKeyMappings();
+  // Clear any inconsistent ones (clashes for same player).
+  for (const [p, playerKeys] of keyMap.entries()) {
+    if (playerKeys.forward == playerKeys.left || playerKeys.forward == playerKeys.right || playerKeys.left == playerKeys.right)
+      keyMap[p] = null;
+  }
+  // For clashes between players, clear the higher player.
+  let usedCodes = new Set();
+  usedCodes.add(''); // Indicates unset.
+  for (const [p, playerKeys] of keyMap.entries()) {
+    if (!playerKeys) continue;
+    if (usedCodes.has(playerKeys.forward) || usedCodes.has(playerKeys.left) || usedCodes.has(playerKeys.right)) {
+      keyMap[p] = null;
+    } else {
+      usedCodes.add(playerKeys.forward);
+      usedCodes.add(playerKeys.left);
+      usedCodes.add(playerKeys.right);
+    }
+  }
+  // For any cleared players, grab one from the defaults list.
+  for (const [p, playerKeys] of keyMap.entries()) {
+    if (!playerKeys) {
+      for (let i = 0; i < defaultKeyMappings.length; i += 3) {
+        if (!usedCodes.has(defaultKeyMappings[i]) && !usedCodes.has(defaultKeyMappings[i + 1]) && !usedCodes.has(defaultKeyMappings[i + 2])) {
+          usedCodes.add(defaultKeyMappings[i]);
+          usedCodes.add(defaultKeyMappings[i + 1]);
+          usedCodes.add(defaultKeyMappings[i + 2]);
+          keyMap[p] = { forward: defaultKeyMappings[i], left: defaultKeyMappings[i + 1], right: defaultKeyMappings[i + 2] };
+          break;
+        }
+      }
+    }
+  }
+
+  updateKeyMappings(keyMap);
+  return keyMap;
+}
+
+function updateKeyMappings(keyMap) {
+  let keys = [];
+  for (const p of keyMap) keys.push(p.forward, p.left, p.right);
+  url.searchParams.set('k', keys.join(','));
+  window.history.replaceState({ path: url.href }, '', url.href);
+}
+
 function startGame() {
   var path = url.pathname;
   path = path.substring(0, path.lastIndexOf('/') + 1);

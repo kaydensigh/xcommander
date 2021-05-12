@@ -152,7 +152,7 @@ function setPlayerCount(p) {
   setupPlayers();
 }
 
-// Show the keyboard image based on the number of players.
+// Highlight keys based on the number of players.
 // The gamepads are also shown if available. 
 // Gamepads are assigned in reverse order so they can be mixed with keyboard players.
 function setupPlayers() {
@@ -164,7 +164,9 @@ function setupPlayers() {
     return;
   }
 
-  document.getElementById('players').src = 'sprites/keyboard' + playerCountStr + '.png';
+  buildPlayerByKey(playerCountInt);
+  updateKeyboard();
+
   [0, 1, 2, 3].forEach(function (index) {
     var gamepadIndex = playerCountInt - index - 1;
     var gamepadLeft = document.getElementById('player' + index + 'gamepadleft');
@@ -181,6 +183,87 @@ function setupPlayers() {
     }
   });
 }
+
+function buildPlayerByKey(playerCount) {
+  playerByKey = new Map();
+  for (const [p, playerKeys] of keyMap.entries()) {
+    if (p == playerCount) break;
+    playerByKey.set(playerKeys.forward, [p, '↑']);
+    playerByKey.set(playerKeys.left, [p, '⟲']);
+    playerByKey.set(playerKeys.right, [p, '⟳']);
+  }
+}
+
+function updateKeyboard() {
+  const layout = KeycodeLayoutData.layouts[layoutList[likelyLayout]];
+  keyboard.textContent = '';
+  for (let row of layout) {
+    let rowDiv = document.createElement('div');
+    rowDiv.classList.add('keyboard-layout-row');
+    keyboard.appendChild(rowDiv);
+    for (const [code, _, offset, width] of row) {
+      let keySpan = document.createElement('span');
+      keySpan.classList.add('keyboard-layout-key');
+      keySpan.style.setProperty("--key-rel-offset", offset);
+      keySpan.style.setProperty("--key-rel-width", width);
+      const playerKey = playerByKey.get(code);
+      if (playerKey) {
+        keySpan.classList.add('p' + (playerKey[0] + 1));
+        keySpan.textContent = playerKey[1];
+      }
+      rowDiv.appendChild(keySpan);
+    }
+  }
+}
+
+function chooseLayout() {
+  // Pick the first layout that has all the codes seen so far.
+  for (const [l, name] of layoutList.entries()) {
+    const layoutLookup = KeycodeLookup.layouts.get(name);
+    if (!layoutLookup) {
+      console.log('Layout not found: ' + name);
+      continue;
+    }
+    let ok = true;
+    for (const code of codesSeen) {
+      if (!layoutLookup.has(code)) {
+        ok = false;
+        break;
+      }
+    }
+    if (ok) {
+      likelyLayout = l;
+      updateKeyboard();
+      return true;
+    }
+  }
+  console.log('No layout contains all codes seen: ');
+  console.log(codesSeen);
+  return false;
+}
+
+function chooseInitialLayout() {
+  // The initial key mapping could be anything and might not be possible on the current keyboard.
+  // We don't know what keyboard the user has though, so pick the best layout based on these keys.
+  // Then reset `codesSeen` so we can pick a better one based on actual KeyboardEvents.
+  keyMap = validateKeyMappings();
+  for (const [p, playerKeys] of keyMap.entries()) {
+    codesSeen.add(playerKeys.forward);
+    codesSeen.add(playerKeys.left);
+    codesSeen.add(playerKeys.right);
+  }
+  chooseLayout();
+  codesSeen = new Set();
+}
+
+let layoutList = ['Standard 101', 'Alternate 101', 'Standard 102', 'Korean 103', 'Brazilian 104', 'Japanese 106', 'Apple'];
+let likelyLayout = 0; // Which of the list above is likely given the codes we've seen.
+let codesSeen = new Set();
+
+let keyboard = document.getElementById('keyboard');
+let keyMap = [];
+let playerByKey = new Map();
+chooseInitialLayout();
 
 var title = document.getElementById('title');
 var author = document.getElementById('author');
