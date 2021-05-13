@@ -34,10 +34,8 @@ var emptyTiles = [];
 var countDown = 300;
 var weaponDrop = 0;
 var totalWeapons = 0;
-var keyPressed = new Uint8Array(256);
-var thrustKeys = [50, 38, 70, 106];
-var leftKeys = [49, 37, 67, 105];
-var rightKeys = [81, 39, 86, 109];
+var keyPressed = new Set();
+var keyMap = getRawKeyMappings();
 
 var health = [];
 var shipDamage = [];
@@ -628,7 +626,7 @@ function trail(player, index) {
 
 function thrust(player, index) {
   var gamepad = gamepadManager.gamepads[playerCount - index - 1];
-  var pressed = keyPressed[thrustKeys[index]] ||
+  var pressed = keyPressed.has(keyMap[index].forward) ||
                 (gamepad && gamepad.buttons[3].pressed);
   if (!pressed) {
     player.thrust.actor.alpha = 0;
@@ -648,7 +646,7 @@ function thrust(player, index) {
 }
 
 function rotate(player, index) {
-  var delta = keyPressed[rightKeys[index]] - keyPressed[leftKeys[index]];
+  var delta = +keyPressed.has(keyMap[index].right) - +keyPressed.has(keyMap[index].left);
   var gamepad = gamepadManager.gamepads[playerCount - index - 1];
   if (gamepad) {
     delta += gamepad.buttons[1].value - gamepad.buttons[2].value;
@@ -874,11 +872,11 @@ function indexOfMinimum(bestIndexSoFar, currentValue, currentIndex, array) {
 }
 
 function keyDown(event) {
-  keyPressed[event.keyCode] = 1;
+  keyPressed.add(event.code);
 };
 
 function keyUp(event) {
-  keyPressed[event.keyCode] = 0;
+  keyPressed.delete(event.code);
 };
 
 window.addEventListener('load', start);

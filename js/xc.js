@@ -217,29 +217,28 @@ function updateKeyboard() {
 }
 
 function chooseLayout() {
-  // Pick the first layout that has all the codes seen so far.
+  // Pick the layout that contains the most of `codesSeen`.
+  let best = 0;
+  let bestCount = 0;
   for (const [l, name] of layoutList.entries()) {
     const layoutLookup = KeycodeLookup.layouts.get(name);
     if (!layoutLookup) {
       console.log('Layout not found: ' + name);
       continue;
     }
-    let ok = true;
+    let count = 0;
     for (const code of codesSeen) {
-      if (!layoutLookup.has(code)) {
-        ok = false;
-        break;
-      }
+      if (layoutLookup.has(code)) count++;
     }
-    if (ok) {
-      likelyLayout = l;
-      updateKeyboard();
-      return true;
+    if (count > bestCount) {
+      best = l;
+      bestCount = count;
     }
   }
-  console.log('No layout contains all codes seen: ');
-  console.log(codesSeen);
-  return false;
+  if (likelyLayout != best) {
+    likelyLayout = best;
+    updateKeyboard();
+  }
 }
 
 function chooseInitialLayout() {

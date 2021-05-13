@@ -159,7 +159,7 @@ const defaultKeyMappings = [
 
 function getRawKeyMappings() {
   const keysFromURL = url.searchParams.get('k') || '';
-  let keys = keysFromURL.split(',');
+  let keys = keysFromURL.split(' ');
   for (let i = keys.length; i < 12; i++) keys.push('');
   return [
     { forward: keys[0], left: keys[1], right: keys[2] },
@@ -210,7 +210,7 @@ function validateKeyMappings() {
 function updateKeyMappings(keyMap) {
   let keys = [];
   for (const p of keyMap) keys.push(p.forward, p.left, p.right);
-  url.searchParams.set('k', keys.join(','));
+  url.searchParams.set('k', keys.join(' '));
   window.history.replaceState({ path: url.href }, '', url.href);
 }
 
