@@ -17,6 +17,10 @@
     <script type="text/javascript" src="https://kaydensigh.github.io/uievents-code-keyboard-layout/keycode-lookup.js"></script>
 
     <style>
+        body {
+            margin: 0;
+        }
+
         .fill {
             padding: 0;
             width: 100%;
@@ -32,6 +36,11 @@
         .heading-text {
             background: #333;
             color: #fff;
+        }
+
+        #mapList {
+            height: 260px;
+            overflow: scroll;
         }
 
         canvas {
@@ -69,9 +78,9 @@
             padding: 5px 5px 5px 5px;
         }
 
-            li:hover {
-                background-color: grey;
-            }
+        li:hover {
+            background-color: grey;
+        }
 
         .map {
             display: none;
@@ -161,6 +170,10 @@
                     <h3>Choose map:</h3>
                     <ul id="mapList">
                         <li>
+                            Arena
+                            <img class="map" src="maps/Arena  kaydensigh.png">
+                        </li>
+                        <li>
                             (blank)
                             <img class="map" src="maps/(none)  (none).png">
                         </li>
@@ -193,8 +206,16 @@
                             <img class="map" src="maps/City Invasion  David Khoury.png">
                         </li>
                         <li>
-                            Playable Template
-                            <img class="map" src="maps/Playable Template  kaydensigh.png">
+                            Mediterranean
+                            <img class="map" src="maps/Mediterranean  kaydensigh.png">
+                        </li>
+                        <li>
+                            SE Asia
+                            <img class="map" src="maps/SE Asia  kaydensigh.png">
+                        </li>
+                        <li>
+                            Headquarters
+                            <img class="map" src="maps/Headquarters  kaydensigh.png">
                         </li>
                     </ul>
                 </div>
