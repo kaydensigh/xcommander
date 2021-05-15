@@ -7,8 +7,7 @@ var playerCount = getPlayerCount();
 var mapData = mapDataFromURL(getURLData());
 
 var tiles = [];
-var backgroundCanvasContext =
-    document.getElementById('background').getContext('2d');
+var backgroundCanvasContext = document.getElementById('background').getContext('2d');
 var world;
 var players = [];
 var totalPlayers = 0;
@@ -19,7 +18,7 @@ function rotateStartPosition(pies) {
   var x = -30, y = 0;
   var theta = pies * Math.PI;
   return [x * Math.cos(theta) - y * Math.sin(theta) + centerX,
-          x * Math.sin(theta) + y * Math.cos(theta) + centerY, 
+          x * Math.sin(theta) + y * Math.cos(theta) + centerY,
           theta];
 }
 var startPositions = {
@@ -66,7 +65,7 @@ function start() {
     var horizontalSpace = canvasDiv.offsetWidth - canvas.offsetWidth;
     var verticalSpace = canvasDiv.offsetHeight - canvas.offsetHeight;
     var left = (canvasDiv.offsetLeft + 0.5 * horizontalSpace) + 'px';
-    var top = (canvasDiv.offsetTop + 0.5 * verticalSpace)+ 'px';
+    var top = (canvasDiv.offsetTop + 0.5 * verticalSpace) + 'px';
     canvas.style.left = left;
     canvas.style.top = top;
     backCanvas.style.left = left;

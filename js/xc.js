@@ -40,9 +40,9 @@ function readFile() {
 // Third line is 4800 digits: 80x60 pixels at 3 bpp.
 function renderMap(fileData) {
   var parts = fileData.split('\r\n');
-  title.value = parts[0]; 
-  author.value = parts[1]; 
-  var data = parts[2]; 
+  title.value = parts[0];
+  author.value = parts[1];
+  var data = parts[2];
   if (data.length != 4800) {
     console.log('Wrong data length: ' + data.length);
     return;
@@ -102,7 +102,7 @@ function getCanvasAsMap() {
   var output = [title.value, '\r\n', author.value, '\r\n'];
   getMapData(output);
   output.push('\r\n');
-  return new Blob([output.join('')], {'type': 'text/plain'});
+  return new Blob([output.join('')], { 'type': 'text/plain' });
 }
 
 // Get an allowed color that is nearest in rectilinear RGB space.
@@ -124,7 +124,7 @@ function getCanvasAsPng() {
   var intArray = new Uint8Array(byteString.length);
   for (var i = 0; i < byteString.length; i++)
     intArray[i] = byteString.charCodeAt(i);
-  return new Blob([intArray], {'type': 'image/png'});
+  return new Blob([intArray], { 'type': 'image/png' });
 }
 
 // Load a built-in map.
