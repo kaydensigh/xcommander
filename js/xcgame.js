@@ -3,7 +3,7 @@
 var gamepadManager = new Gamepad();
 gamepadManager.init();
 
-var playerCount = parseInt(getPlayerCountString());
+var playerCount = getPlayerCount();
 var mapData = mapDataFromURL(getURLData());
 
 var tiles = [];

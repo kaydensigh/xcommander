@@ -134,8 +134,13 @@ var colorFillStyle = [
   'rgb( 68,  30,  26)',  // brown
 ];
 
-function getPlayerCountString() {
-  return url.searchParams.get('p');
+function getPlayerCount() {
+  let playerCountInt = parseInt(url.searchParams.get('p'));
+  if (playerCountInt != 2 && playerCountInt != 3 && playerCountInt != 4) {
+    playerCountInt = 2;
+    setPlayerCount('2');
+  }
+  return playerCountInt;
 }
 
 function updatePlayerCount(p) {

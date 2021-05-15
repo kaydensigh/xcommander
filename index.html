@@ -94,8 +94,19 @@
             margin: 0;
         }
 
+        .player-icon {
+            margin-left: 13px;
+            margin-right: 13px;
+            width: 64px;
+            height: 64px;
+        }
+
         .gamepad-flex {
             justify-content: space-between;
+        }
+
+        #gamepads {
+            display: none;
         }
 
         .gamepad-container {
@@ -106,7 +117,7 @@
             float: left;
             width: 40px;
             height: 55px;
-            display: none;
+            visibility: hidden;
         }
 
         :root {
@@ -250,7 +261,19 @@
         <div class="row">
             <div class="column">
                 <div id="keyboard"></div>
+                <div id="changeKeyButtons" class="row gamepad-flex">
+                    <button id="p1Change">Change Keys</button>
+                    <button id="p3Change">Change Keys</button>
+                    <button id="p2Change">Change Keys</button>
+                    <button id="p4Change">Change Keys</button>
+                </div>
                 <div class="row gamepad-flex">
+                    <img id="p1Icon" class="player-icon" src="misc/p1.png">
+                    <img id="p3Icon" class="player-icon" src="misc/p3.png">
+                    <img id="p2Icon" class="player-icon" src="misc/p2.png">
+                    <img id="p4Icon" class="player-icon" src="misc/p4.png">
+                </div>
+                <div id="gamepads" class="row gamepad-flex">
                     <span class="gamepad-container">
                         <img class="gamepad" id="player0gamepadleft">
                         <img class="gamepad" id="player0gamepadright">
@@ -259,7 +282,6 @@
                         <img class="gamepad" id="player2gamepadleft">
                         <img class="gamepad" id="player2gamepadright">
                     </span>
-                    <span></span>
                     <span class="gamepad-container">
                         <img class="gamepad" id="player1gamepadleft">
                         <img class="gamepad" id="player1gamepadright">
@@ -269,7 +291,7 @@
                         <img class="gamepad" id="player3gamepadright">
                     </span>
                 </div>
-                <div>Press a button on a connected gamepad to enable it.</div>
+                <div id="gamepadMessage">Press a button on a connected gamepad to enable it.</div>
             </div>
             <div class="column buttons">
                 <button id="2Players">2 players</button>

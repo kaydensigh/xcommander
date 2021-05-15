@@ -156,30 +156,28 @@ function setPlayerCount(p) {
 // The gamepads are also shown if available. 
 // Gamepads are assigned in reverse order so they can be mixed with keyboard players.
 function setupPlayers() {
-  var playerCountStr = getPlayerCountString();
-  var playerCountInt = parseInt(playerCountStr);
-  if (playerCountInt != 2 && playerCountInt != 3 && playerCountInt != 4) {
-    playerCountInt = 2;
-    setPlayerCount('2');
-    return;
-  }
-
-  buildPlayerByKey(playerCountInt);
+  var playerCount = getPlayerCount();
+  buildPlayerByKey(playerCount);
   updateKeyboard();
 
+  document.getElementById('gamepads').style.display = gamepadManager.gamepads.length ? 'inherit' : 'none';
+  document.getElementById('gamepadMessage').style.display = gamepadManager.gamepads.length ? 'none' : 'inherit';
+
   [0, 1, 2, 3].forEach(function (index) {
-    var gamepadIndex = playerCountInt - index - 1;
+    document.getElementById('p' + (index + 1) + 'Icon').style.visibility = index < playerCount ? 'visible' : 'hidden';
+    document.getElementById('p' + (index + 1) + 'Change').style.visibility = index < playerCount ? 'visible' : 'hidden';
+
+    var gamepadIndex = playerCount - index - 1;
     var gamepadLeft = document.getElementById('player' + index + 'gamepadleft');
-    var gamepadRight =
-        document.getElementById('player' + index + 'gamepadright');
+    var gamepadRight = document.getElementById('player' + index + 'gamepadright');
     if (gamepadManager.gamepads[gamepadIndex]) {
       gamepadLeft.src = 'sprites/gamepadleft' + (gamepadIndex + 1) + '.png';
       gamepadRight.src = 'sprites/gamepadright' + (index + 1) + '.png';
-      gamepadLeft.style.display = 'initial';
-      gamepadRight.style.display = 'initial';
+      gamepadLeft.style.visibility = 'visible';
+      gamepadRight.style.visibility = 'visible';
     } else {
-      gamepadLeft.style.display = 'none';
-      gamepadRight.style.display = 'none';
+      gamepadLeft.style.visibility = 'hidden';
+      gamepadRight.style.visibility = 'hidden';
     }
   });
 }
@@ -188,7 +186,7 @@ function buildPlayerByKey(playerCount) {
   playerByKey = new Map();
   for (const [p, playerKeys] of keyMap.entries()) {
     if (p == playerCount) break;
-    playerByKey.set(playerKeys.forward, [p, '↑']);
+    playerByKey.set(playerKeys.forward, [p, '⇧']);
     playerByKey.set(playerKeys.left, [p, '⟲']);
     playerByKey.set(playerKeys.right, [p, '⟳']);
   }
@@ -197,7 +195,7 @@ function buildPlayerByKey(playerCount) {
 function updateKeyboard() {
   const layout = KeycodeLayoutData.layouts[layoutList[likelyLayout]];
   keyboard.textContent = '';
-  for (let row of layout) {
+  for (let [r, row] of layout.entries()) {
     let rowDiv = document.createElement('div');
     rowDiv.classList.add('keyboard-layout-row');
     keyboard.appendChild(rowDiv);
@@ -213,6 +211,89 @@ function updateKeyboard() {
       }
       rowDiv.appendChild(keySpan);
     }
+    if (r == 0) { // Empty space below function keys.
+      let rowDiv = document.createElement('div');
+      rowDiv.style.height = '10px';
+      keyboard.appendChild(rowDiv);
+    }
+  }
+}
+
+function changeKeys(e) {
+  if (changingKeysDiv) return; // Already changing a player.
+
+  var button = e.target;
+  changingKeysPlayer = parseInt(button.id.match(/\d/)[0]);
+  changingKeysCodes = { forward: '', left: '', right: '' };
+
+  // Construct div that prompts for new keys.
+  changingKeysDiv = document.createElement('div');
+  changingKeysDiv.textContent = 'Press key for: ';
+  var up = document.createElement('span');
+  up.textContent = '⇧';
+  var left = document.createElement('span');
+  left.textContent = '⟲';
+  var right = document.createElement('span');
+  right.textContent = '⟳';
+  changingKeysDiv.appendChild(up);
+  changingKeysDiv.appendChild(left);
+  changingKeysDiv.appendChild(right);
+
+  // Highlight the current action that needs a key.
+  up.style.backgroundColor = 'lightyellow';
+  // Attach div, hide "Change Key" button.
+  button.parentElement.insertBefore(changingKeysDiv, button);
+  button.style.display = 'none';
+}
+
+function keyUsedByOtherPlayer(code, playerCount) {
+  for (let p = 0; p < playerCount; p++) {
+    if (p == changingKeysPlayer - 1) continue;
+
+    if (code == keyMap[p].forward || code == keyMap[p].left || code == keyMap[p].right)
+      return true;
+  }
+  return false;
+}
+
+function assignKey(code, character) {
+  const playerCount = getPlayerCount();
+  const playerIndex = changingKeysPlayer - 1;
+  // Look at spans in the prompt to know which key is being assigned.
+  let forwardSymbol = changingKeysDiv.children[0];
+  let leftSymbol = changingKeysDiv.children[1];
+  let rightSymbol = changingKeysDiv.children[2];
+  if (forwardSymbol.style.backgroundColor == 'lightyellow') {
+    // Assign forward.
+    if (keyUsedByOtherPlayer(code, playerCount)) return;
+    changingKeysCodes.forward = code;
+    forwardSymbol.textContent = character;
+    forwardSymbol.style.backgroundColor = null;
+    leftSymbol.style.backgroundColor = 'lightyellow';
+  } else if (leftSymbol.style.backgroundColor == 'lightyellow') {
+    // Assign left.
+    if (keyUsedByOtherPlayer(code, playerCount)) return;
+    changingKeysCodes.left = code;
+    leftSymbol.textContent = character;
+    leftSymbol.style.backgroundColor = null;
+    rightSymbol.style.backgroundColor = 'lightyellow';
+  } else if (rightSymbol.style.backgroundColor == 'lightyellow') {
+    // Assign right.
+    if (keyUsedByOtherPlayer(code, playerCount)) return;
+    changingKeysCodes.right = code;
+    document.getElementById('p' + changingKeysPlayer + 'Change').style.display = null;
+    changingKeysDiv.parentElement.removeChild(changingKeysDiv);
+    changingKeysDiv = null;
+
+    if (changingKeysCodes.forward == changingKeysCodes.left || changingKeysCodes.forward == changingKeysCodes.right || changingKeysCodes.left == changingKeysCodes.right)
+      return;
+    // If the keys are self-consistent, apply and update everything.
+    keyMap[playerIndex] = changingKeysCodes;
+    changingKeysCodes = null;
+    updateKeyMappings(keyMap);
+    keyMap = validateKeyMappings();
+    buildPlayerByKey(playerCount);
+    updateKeyboard();
   }
 }
 
@@ -262,7 +343,26 @@ let codesSeen = new Set();
 let keyboard = document.getElementById('keyboard');
 let keyMap = [];
 let playerByKey = new Map();
+let changingKeysDiv = null;
+let changingKeysPlayer = 0;
+let changingKeysCodes = null;
 chooseInitialLayout();
+
+window.addEventListener('keydown', function (e) {
+  // Update layout based on observed codes.
+  codesSeen.add(code);
+  const layoutLookup = KeycodeLookup.layouts.get(layoutList[likelyLayout]);
+  const position = layoutLookup.get(code);
+  if (!position) {
+    chooseLayout();
+  }
+
+  if (changingKeysDiv) { // Currently changing keys.
+    assignKey(e.code, e.key);
+    return true;
+  }
+  return false;
+});
 
 var title = document.getElementById('title');
 var author = document.getElementById('author');
@@ -283,6 +383,10 @@ document.getElementById('importMapInput').addEventListener('change', readFile, f
 document.getElementById('importPngInput').addEventListener('change', readFile, false);
 document.getElementById('saveMap').addEventListener('click', saveMap);
 document.getElementById('savePng').addEventListener('click', savePng);
+document.getElementById('p1Change').addEventListener('click', changeKeys);
+document.getElementById('p2Change').addEventListener('click', changeKeys);
+document.getElementById('p3Change').addEventListener('click', changeKeys);
+document.getElementById('p4Change').addEventListener('click', changeKeys);
 document.getElementById('2Players').addEventListener('click', selectPlayers);
 document.getElementById('3Players').addEventListener('click', selectPlayers);
 document.getElementById('4Players').addEventListener('click', selectPlayers);
