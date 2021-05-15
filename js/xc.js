@@ -350,9 +350,9 @@ chooseInitialLayout();
 
 window.addEventListener('keydown', function (e) {
   // Update layout based on observed codes.
-  codesSeen.add(code);
+  codesSeen.add(e.code);
   const layoutLookup = KeycodeLookup.layouts.get(layoutList[likelyLayout]);
-  const position = layoutLookup.get(code);
+  const position = layoutLookup.get(e.code);
   if (!position) {
     chooseLayout();
   }
