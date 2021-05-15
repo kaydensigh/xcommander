@@ -134,6 +134,17 @@ var colorFillStyle = [
   'rgb( 68,  30,  26)',  // brown
 ];
 
+var colorFillStyleHalf = [
+  'rgba(255, 255, 255, 0.5)',  // clear
+  'rgba(  0,   0,   0, 0.5)',  // black
+  'rgba( 80, 166,  69, 0.5)',  // green
+  'rgba(214, 116,   0, 0.5)',  // orange
+  'rgba(199,  46,  30, 0.5)',  // red
+  'rgba(135, 196, 207, 0.5)',  // blue
+  'rgba(208, 206, 125, 0.5)',  // yellow
+  'rgba( 68,  30,  26, 0.5)',  // brown
+];
+
 function getPlayerCount() {
   let playerCountInt = parseInt(url.searchParams.get('p'));
   if (playerCountInt != 2 && playerCountInt != 3 && playerCountInt != 4) {

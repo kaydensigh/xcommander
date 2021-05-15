@@ -271,7 +271,7 @@ function drawBackgroundCanvasAt(x, y) {
   backgroundCanvasContext.clearRect(
       (size * x) | 0, (size * y) | 0, (size + 1) | 0, (size + 1) | 0);
   if (color !== 0) {
-    backgroundCanvasContext.fillStyle = colorFillStyle[color];
+    backgroundCanvasContext.fillStyle = colorFillStyleHalf[color];
     backgroundCanvasContext.fillRect(
         (size * x) | 0, (size * y) | 0, (size + 1) | 0, (size + 1) | 0);
   }
