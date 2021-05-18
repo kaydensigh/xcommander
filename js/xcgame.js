@@ -346,6 +346,8 @@ function makePlayer(startPosition, index) {
   player.modifier = 0;
   player.modifierTime = 0;
   player.modifierIcon = null;
+  player.chargeUp = 0;
+  player.chargeDown = 0;
   player.debrisTime = 0;
   player.dyingTime = 0;
   player.laserTarget = new box2d.b2Vec2();
@@ -453,6 +455,8 @@ function explosionPlayer(explosion, player) {
 }
 
 function explosionBullet(explosion, bullet) {
+  if (bullet.destroyed) return;
+
   var bulletPosition = bullet.body.GetPosition();
   // Debris moves away from epicenter, depending on distance.
   var velocity = bulletPosition.Clone();
@@ -460,10 +464,8 @@ function explosionBullet(explosion, bullet) {
   const explosionRadiusSquared = 6.3 * 6.3;
   velocity.SelfMul(4 * (explosionRadiusSquared - velocity.GetLengthSquared()) / explosionRadiusSquared);
   makeDebris(0.6, bulletPosition, velocity, bullet.actor.getFrame(), 5, 'bullet');
-  if (!bullet.destroyed) {
-    destroyBullet(bullet);
-    bulletsDestroyed[explosion.actor.getFrame()].textContent++;
-  }
+  destroyBullet(bullet);
+  bulletsDestroyed[explosion.actor.getFrame()].textContent++;
 }
 
 function destroyBullet(bullet) {
@@ -538,8 +540,12 @@ function collectModifier(player, modifier) {
       if (modifierIndex == 3) {
         player.modifierIcon = world.newThing(
           'deflection', { alpha: 0.5, scale: [0.45, 0.45], depth: 1, position: player.body.GetPosition(), angle: player.body.GetAngleRadians() });
+        setOwner(player.modifierIcon, player.index);
+      } else if (modifierIndex == 4) {
+        player.modifierIcon = world.newThing(
+          'blank', { animation: 'explosion', scale: [0.1, 0.1], depth: 1, position: player.body.GetPosition() });
+        player.modifierIcon.actor.setFrame(player.index);
       }
-      setOwner(player.modifierIcon, player.index);
     }
     drawModifiers(player);
   }
@@ -656,7 +662,7 @@ function spawnAnimation(thing) {
     thing.actor.alpha = 1;
     thing.body.SetAngleRadians(10 * Math.PI);
     if (thing.kind.name == 'modifier') {
-      thing.actor.setFrame(3);
+      thing.actor.setFrame((3 + 2 * Math.random()) | 0);
     } else {
       thing.actor.setFrame((2 + 4 * Math.random()) | 0);
     }
@@ -775,17 +781,30 @@ function rotate(player, index) {
 
 function drawModifiers(player, index) {
   let icon = player.modifierIcon;
-  if (!icon) return;
-  icon.body.SetPosition(player.body.GetPosition());
+  if (!icon || icon.destroyed) return;
+  let pp = player.body.GetPosition();
+  icon.body.SetPosition(pp);
+  if (player.modifier == 4) {
+    let angle = player.body.GetAngleRadians();
+    var direction = new box2d.b2Vec2(Math.cos(angle), Math.sin(angle));
+    direction.SelfMul(1.6 + 0.2 * player.chargeUp);
+    direction.SelfAdd(pp);
+    icon.body.SetPosition(direction);
+    let scale = (player.chargeUp + 1) / 30;
+    icon.actor.scaleX = scale;
+    icon.actor.scaleY = scale;
+    icon.actor.alpha = player.chargeDown > 0 ? 0 : 1;
+  }
 }
 
 function aimLaser(player, index) {
   var actor = player.laser.actor;
-  if (player.weapon != 5) {
+  if (player.weapon != 5 || (player.modifier == 4 && player.chargeDown == 0)) {
     actor.alpha = 0;
     return;
   }
 
+  actor.scaleY = player.modifier == 4 ? 1.5 : 0.5;
   actor.alpha = 1;
   var position = player.body.GetPosition();
   var angle = player.body.GetAngleRadians();
@@ -824,18 +843,25 @@ function shoot(player, index) {
   var weapon = weapons[player.weapon];
   player.shootTime--;
   if (player.shootTime <= 0) {
-      weapon.shoot(player, index);
+    weapon.shoot(player, index);
   }
   if (player.modifier > 0) {
     if (player.modifierTime > 0) {
       player.modifierTime--;
     } else {
-      player.modifier = 0;
-      if (player.modifierIcon) {
-        player.modifierIcon.destroy();
-        player.modifierIcon = null;
-      }
+      clearModifier(player);
     }
+  }
+}
+
+function clearModifier(player) {
+  player.modifier = 0;
+  player.chargeDown = player.chargeUp;
+  player.chargeUp = 0;
+  let icon = player.modifierIcon;
+  if (icon) {
+    if (!icon.destroyed) icon.destroy();
+    player.modifierIcon = null;
   }
 }
 
@@ -915,52 +941,138 @@ var weapons = [
   },
   {  // Gun
     shoot: function (player, index) {
-      weaponShoot(player, index, 0, [1, 1], 30);
       player.shootTime = 30;
+      // If charging, charge up instead of shooting.
+      // Once charged, shoot 3 times in quick succession.
+      if (player.modifier == 4 && player.chargeUp < 3 && player.chargeDown == 0) {
+        player.chargeUp++;
+        if (player.chargeUp >= 3) {
+          player.chargeUp = 0;
+          player.chargeDown = 5;
+        }
+        else return;
+      }
+      weaponShoot(player, index, 0, [1, 1], 30);
+      if (player.chargeDown > 0) {
+        player.chargeDown--;
+        if (player.chargeDown > 0) player.shootTime = 5;
+      }
     },
   },
   {  // Multi-shot
     shoot: function (player, index) {
-      for (var i = -1; i < 2; i += 1) {
+      player.shootTime = 60;
+      let arc = 1;
+      // Once charged, shoot a wider arc followed by a regular.
+      if (player.modifier == 4 && player.chargeUp < 3 && player.chargeDown == 0) {
+        player.chargeUp++;
+        player.shootTime = 45;
+        if (player.chargeUp >= 3) {
+          player.chargeUp = 0;
+          player.chargeDown = 3;
+        }
+        else return;
+      }
+      if (player.chargeDown > 0) {
+        player.chargeDown--;
+        arc = player.chargeDown;
+        if (player.chargeDown > 0) player.shootTime = 5;
+      }
+      for (var i = -arc; i <= arc; i += 1) {
         weaponShoot(player, index, 0.1 * i, [1, 1]);
       }
-      player.shootTime = 60;
     },
   },
   {  // Grenade
     shoot: function (player, index) {
-      weaponShoot(player, index, 0, [2, 2]);
       player.shootTime = 60;
+      let arc = 0;
+      // Once charged, shoot 5 simutaneously.
+      if (player.modifier == 4 && player.chargeUp < 3 && player.chargeDown == 0) {
+        player.chargeUp++;
+        if (player.chargeUp >= 3) {
+          player.chargeUp = 0;
+          player.chargeDown = 3;
+        }
+        else return;
+      }
+      if (player.chargeDown > 0) {
+        arc = player.chargeDown - 1;
+        player.chargeDown = 0;
+      }
+      for (var i = -arc; i <= arc; i += 1) {
+        weaponShoot(player, index, 0.1 * i, [2, 2]);
+      }
     },
   },
   {  // Missile
     shoot: function (player, index) {
-      weaponShoot(player, index, 0, [3, 1]);
       player.shootTime = 60;
+      // Once charged, shoot 5 times in quick succession.
+      if (player.modifier == 4 && player.chargeUp < 3 && player.chargeDown == 0) {
+        player.chargeUp++;
+        if (player.chargeUp >= 3) {
+          player.chargeUp = 0;
+          player.chargeDown = 5;
+        }
+        else return;
+      }
+      weaponShoot(player, index, 0, [3, 1]);
+      if (player.chargeDown > 0) {
+        player.chargeDown--;
+        if (player.chargeDown > 0) player.shootTime = 10;
+      }
     },
   },
   {  // Laser
     shoot: function (player, index) {
+      player.shootTime = 15;
+      // Charge for 120, then shoot for 80 at 3x rate.
+      if (player.modifier == 4 && player.chargeUp < 2 && player.chargeDown == 0) {
+        player.chargeUp += 0.25;
+        if (player.chargeUp >= 2) {
+          player.chargeUp = 0;
+          player.chargeDown = 16;
+        }
+        else return;
+      }
+
+      let charged = player.chargeDown > 0;
       let bullet = player.laserBulletTarget;
       let deflection = player.laserDeflectionTarget;
-      if (bullet) {
+      if (bullet && !bullet.destroyed) {
         var body = bullet.body;
         makeDebris(0.6, body.GetPosition(), body.GetLinearVelocity(),
-                   bullet.actor.getFrame(), 5, 'bullet');
-        if (!bullet.destroyed) {
-          destroyBullet(bullet);
-          bulletsDestroyed[index].textContent++;
-        }
-      } else if (deflection) {
+          bullet.actor.getFrame(), 5, 'bullet');
+        destroyBullet(bullet);
+        bulletsDestroyed[index].textContent++;
+      } else if (deflection && !charged) {
         let deflectionIndex = deflection.actor.getFrame();
         let angle = Math.PI + Math.atan2(player.laserNormal.y, player.laserNormal.x);
         angle = 2 * angle - player.body.GetAngleRadians();
         let angleDelta = Math.PI + 0.4 * Math.random() - 0.2;
         laserShoot(players[deflectionIndex], deflectionIndex, angle + angleDelta, player.laserTarget);
+      } else if (deflection && charged) {
+        var explosion = world.newThing('zoom', {
+          position: player.body.GetPosition(),
+          animation: 'explosion',
+          depth: 1,
+          alpha: 0.5,
+        });
+        let deflectionIndex = deflection.actor.getFrame();
+        explosion.actor.setFrame(deflectionIndex);
+        clearModifier(players[deflectionIndex]);
       } else {
         laserShoot(player, index, player.body.GetAngleRadians(), player.laserTarget);
+        if (charged) {
+          makeDebris(0.6, player.laserTarget, new box2d.b2Vec2(), 1, 10);
+        } 
       }
-      player.shootTime = 15;
+
+      if (player.chargeDown > 0) {
+        player.chargeDown--;
+        if (player.chargeDown > 0) player.shootTime = 4;
+      }
     },
   },
 ];
