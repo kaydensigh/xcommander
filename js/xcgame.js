@@ -352,10 +352,18 @@ function makePlayer(startPosition, index) {
   player.chargeDown = 0;
   player.debrisTime = 0;
   player.dyingTime = 0;
-  player.laserTarget = new box2d.b2Vec2();
-  player.laserBulletTarget = null;
-  player.laserDeflectionTarget = null;
-  player.laserNormal = null;
+  player.laserHit1 = {
+    target: new box2d.b2Vec2(),
+    bulletTarget: null,
+    deflectionTarget: null,
+    normal: null,
+  };
+  player.laserHit2 = {
+    target: new box2d.b2Vec2(),
+    bulletTarget: null,
+    deflectionTarget: null,
+    normal: null,
+  };
   player.laser = world.newThing(
       'blank', { animation: 'bullet', scale: [0.5, 0.5], depth: 1 });
   player.laser.actor.alpha = 0;
@@ -666,7 +674,7 @@ function spawnAnimation(thing) {
     thing.actor.alpha = 1;
     thing.body.SetAngleRadians(10 * Math.PI);
     if (thing.kind.name == 'modifier') {
-      thing.actor.setFrame((3 + 2 * Math.random()) | 0);
+      thing.actor.setFrame((2 + 3 * Math.random()) | 0);
     } else {
       thing.actor.setFrame((2 + 4 * Math.random()) | 0);
     }
@@ -802,7 +810,8 @@ function drawModifiers(player, index) {
 }
 
 function aimLaser(player, index) {
-  var actor = player.laser.actor;
+  let actor = player.laser.actor;
+  let body = player.laser.body;
   if (player.weapon != 5 || (player.modifier == 4 && player.chargeDown == 0)) {
     actor.alpha = 0;
     return;
@@ -810,37 +819,49 @@ function aimLaser(player, index) {
 
   actor.scaleY = player.modifier == 4 ? 1.5 : 0.5;
   actor.alpha = 1;
-  var position = player.body.GetPosition();
-  var angle = player.body.GetAngleRadians();
+  const position = player.body.GetPosition();
+  const angle = player.body.GetAngleRadians();
 
-  var deflection = world.allKinds['deflection'];
-  var wall = world.allKinds['wall'];
-  var barrier = world.allKinds['barrier'];
-  var playerKind = world.allKinds['player'];
-  var bulletKind = world.allKinds['bullet'];
-  var target = position.Clone();
+  if (player.modifier == 2) {
+    raycastLaser(index, position, angle + Math.PI / 2, player.laserHit1);
+    raycastLaser(index, position, angle - Math.PI / 2, player.laserHit2);
+    actor.scaleX = 170 * (player.laserHit1.fraction + player.laserHit2.fraction);
+    body.SetPositionXY(0.5 * (player.laserHit1.target.x + player.laserHit2.target.x),
+                       0.5 * (player.laserHit1.target.y + player.laserHit2.target.y));
+    body.SetAngleRadians(angle + Math.PI / 2);
+  } else {
+    raycastLaser(index, position, angle, player.laserHit1);
+    actor.scaleX = 170 * player.laserHit1.fraction;
+    body.SetPositionXY(0.5 * (position.x + player.laserHit1.target.x),
+                       0.5 * (position.y + player.laserHit1.target.y));
+    body.SetAngleRadians(angle);
+  }
+}
+
+function raycastLaser(index, position, angle, output) {
+  const deflection = world.allKinds['deflection'];
+  const wall = world.allKinds['wall'];
+  const barrier = world.allKinds['barrier'];
+  const playerKind = world.allKinds['player'];
+  const bulletKind = world.allKinds['bullet'];
+  let target = position.Clone();
   target.x += 100 * Math.cos(angle);
   target.y += 100 * Math.sin(angle);
   world.boxWorld.RayCast(function (fixture, point, normal, fraction) {
-    var thing = fixture.GetBody().GetUserData();
-    var kind = thing.kind;
-    if (kind === playerKind || kind === bulletKind ||
-        kind === deflection || kind === wall || kind === barrier) {
-      player.laserTarget.Copy(point);
-      actor.scaleX = 170 * fraction;
-      player.laserBulletTarget = kind === bulletKind ? thing : null;
-      player.laserDeflectionTarget = kind === deflection ? thing : null;
-      player.laserNormal = normal;
+    const thing = fixture.GetBody().GetUserData();
+    const kind = thing.kind;
+    if (kind === playerKind || (kind === bulletKind && thing.actor.getFrame() != index) ||
+      kind === deflection || kind === wall || kind === barrier) {
+      output.target.Copy(point);
+      output.bulletTarget = kind === bulletKind ? thing : null;
+      output.deflectionTarget = kind === deflection ? thing : null;
+      output.normal = normal;
+      output.fraction = fraction;
       return fraction;  // Only look for fixtures closer than this one.
     } else {
       return -1;  // Ignore this fixture and continue.
     }
   }, position, target);
-
-  var body = player.laser.body;
-  body.SetPositionXY(0.5 * (position.x + player.laserTarget.x),
-                     0.5 * (position.y + player.laserTarget.y));
-  body.SetAngleRadians(angle);
 }
 
 function shoot(player, index) {
@@ -1041,36 +1062,12 @@ var weapons = [
         else return;
       }
 
-      let charged = player.chargeDown > 0;
-      let bullet = player.laserBulletTarget;
-      let deflection = player.laserDeflectionTarget;
-      if (bullet && !bullet.destroyed) {
-        var body = bullet.body;
-        makeDebris(0.6, body.GetPosition(), body.GetLinearVelocity(),
-          bullet.actor.getFrame(), 5, 'bullet');
-        destroyBullet(bullet);
-        bulletsDestroyed[index].textContent++;
-      } else if (deflection && !charged) {
-        let deflectionIndex = deflection.actor.getFrame();
-        let angle = Math.PI + Math.atan2(player.laserNormal.y, player.laserNormal.x);
-        angle = 2 * angle - player.body.GetAngleRadians();
-        let angleDelta = Math.PI + 0.4 * Math.random() - 0.2;
-        laserShoot(players[deflectionIndex], deflectionIndex, angle + angleDelta, player.laserTarget);
-      } else if (deflection && charged) {
-        var explosion = world.newThing('zoom', {
-          position: player.body.GetPosition(),
-          animation: 'explosion',
-          depth: 1,
-          alpha: 0.5,
-        });
-        let deflectionIndex = deflection.actor.getFrame();
-        explosion.actor.setFrame(deflectionIndex);
-        clearModifier(players[deflectionIndex]);
+      const charged = player.chargeDown > 0;
+      if (player.modifier == 2) {
+        shootLaser(player, Math.PI / 2, player.laserHit1, charged);
+        shootLaser(player, -Math.PI / 2, player.laserHit2, charged);
       } else {
-        laserShoot(player, index, player.body.GetAngleRadians(), player.laserTarget);
-        if (charged) {
-          makeDebris(0.6, player.laserTarget, new box2d.b2Vec2(), 1, 10);
-        } 
+        shootLaser(player, 0, player.laserHit1, charged);
       }
 
       if (player.chargeDown > 0) {
@@ -1081,14 +1078,58 @@ var weapons = [
   },
 ];
 
-function weaponShoot(relativeTo, index, angleDelta, scale, speed) {
-  let position = relativeTo.body.GetPosition();
-  let angle = relativeTo.body.GetAngleRadians() + angleDelta;
-  let velocity = relativeTo.body.GetLinearVelocity().Clone();
+function weaponShoot(player, index, angleDelta, scale, speed) {
+  const position = player.body.GetPosition();
+  const angle = player.body.GetAngleRadians() + angleDelta;
+  const velocity = player.body.GetLinearVelocity();
   speed = speed || 20;
+  if (player.modifier == 2) {
+    bulletShoot(position, angle + Math.PI / 2, velocity, speed, index, scale);
+    bulletShoot(position, angle - Math.PI / 2, velocity, speed, index, scale);
+  } else {
+    bulletShoot(position, angle, velocity, speed, index, scale);
+  }
+}
+
+function bulletShoot(position, angle, baseVelocity, speed, index, scale) {
+  let velocity = baseVelocity.Clone();
   velocity.x += speed * Math.cos(angle);
   velocity.y += speed * Math.sin(angle);
   makeBullet(position, angle, velocity, index, scale);
+}
+
+function shootLaser(player, angleDelta, hit, charged) {
+  const angle = player.body.GetAngleRadians() + angleDelta;
+  const bullet = hit.bulletTarget;
+  const deflection = hit.deflectionTarget;
+  if (bullet && !bullet.destroyed) {
+    var body = bullet.body;
+    makeDebris(0.6, body.GetPosition(), body.GetLinearVelocity(),
+      bullet.actor.getFrame(), 5, 'bullet');
+    destroyBullet(bullet);
+    bulletsDestroyed[player.index].textContent++;
+  } else if (deflection && !charged) {
+    const deflectionIndex = deflection.actor.getFrame();
+    let deflectedAngle = Math.PI + Math.atan2(hit.normal.y, hit.normal.x);
+    deflectedAngle = 2 * deflectedAngle - angle;
+    const deflectedAngleDelta = Math.PI + 0.4 * Math.random() - 0.2;
+    laserShoot(players[deflectionIndex], deflectionIndex, deflectedAngle + deflectedAngleDelta, hit.target);
+  } else if (deflection && charged) {
+    var explosion = world.newThing('zoom', {
+      position: deflection.body.GetPosition(),
+      animation: 'explosion',
+      depth: 1,
+      alpha: 0.5,
+    });
+    let deflectionIndex = deflection.actor.getFrame();
+    explosion.actor.setFrame(deflectionIndex);
+    clearModifier(players[deflectionIndex]);
+  } else {
+    laserShoot(player, player.index, angle, hit.target);
+    if (charged) {
+      makeDebris(0.6, hit.target, new box2d.b2Vec2(), 1, 10);
+    }
+  }
 }
 
 function laserShoot(relativeTo, index, angle, position) {
