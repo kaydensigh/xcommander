@@ -182,11 +182,14 @@ function start() {
       {
         name: 'deflection',
         animation: 'explosion',
-        movementType: 'kinematic',
+        movementType: 'static',
         fixtures: [
           {
             shapeType: 'circle',
             shapeData: 6.3,
+            properties: {
+              isSensor: true,
+            },
           },
         ],
       },
@@ -264,8 +267,7 @@ function setup() {
   world.allKinds['explosion'].beginContactActions['bullet'] = explosionBullet;
   world.allKinds['player'].beginContactActions['weapon'] = collectWeapon;
   world.allKinds['player'].beginContactActions['modifier'] = collectModifier;
-  world.allKinds['deflection'].beginContactActions['bullet'] = deflectionBulletBegin;
-  world.allKinds['deflection'].endContactActions['bullet'] = deflectionBulletEnd;
+  world.allKinds['deflection'].beginContactActions['bullet'] = deflectionBullet;
 
   // Create initial Things.
   world.newThing('barrier', { position: [40, -1], scale: [82, 1] });
@@ -378,6 +380,11 @@ function nearestEmptyTile(position) {
 function hitPlayer(bullet, player) {
   if (bullet.destroyed)
     return;
+
+  if (player.modifier == 3) {
+    deflectionBullet(player.modifierIcon, bullet);
+    return;
+  }
 
   var bulletVelocity = bullet.body.GetLinearVelocity();
   var bulletPosition = bullet.body.GetPosition();
@@ -551,26 +558,23 @@ function collectModifier(player, modifier) {
   }
 }
 
-function deflectionBulletBegin(deflection, bullet) {
-  if (!deflection || deflection.destroyed || !bullet || bullet.destroyed || bullet.actor.scaleX != 3)
+function deflectionBullet(deflection, bullet) {
+  if (!deflection || deflection.destroyed || !bullet || bullet.destroyed || bullet.actor.getFrame() == deflection.actor.getFrame())
     return;
 
-  if (bullet.actor.getFrame() != deflection.actor.getFrame()) {
-    bullet.body.SetAngleRadians(bullet.body.GetAngleRadians() + Math.PI);
+  if (bullet.actor.scaleX == 2) {
+    destroyBullet(bullet);
+    return;
   }
-  let velocity = bullet.body.GetLinearVelocity();
-  if (velocity.GetLengthSquared() != (20 * 20)) {
-    velocity.SelfNormalize();
-    velocity.SelfMul(20);
-    bullet.body.SetLinearVelocity(velocity);
-  }
-}
-
-function deflectionBulletEnd(deflection, bullet) {
-  if (!deflection || deflection.destroyed || !bullet || bullet.destroyed || bullet.actor.getFrame() == deflection.actor.getFrame())
-      return;
-
   setOwner(bullet, deflection.actor.getFrame());
+  if (bullet.actor.scaleX == 1) {
+    let normal = bullet.body.GetPosition().Clone();
+    normal.SelfSub(deflection.body.GetPosition());
+    normal.SelfNormalize();
+    let impulse = 2 * bullet.body.m_mass * bullet.body.GetLinearVelocity().Dot(normal);
+    normal.SelfMul(impulse);
+    bullet.body.ApplyLinearImpulse(normal, bullet.body.GetPosition());
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
