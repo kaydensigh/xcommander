@@ -31,6 +31,7 @@ var startPositions = {
 var emptyTiles = [];
 
 var countDown = 300;
+var weaponDropInitial = 600;
 var weaponDrop = 0;
 var totalWeapons = 0;
 var modifierDropInitial = 900;
@@ -141,6 +142,9 @@ function start() {
             properties: {
               friction: 0,
             },
+            collisionFilter: {
+              collisionCategories: ['player'],
+            },
           },
         ],
         linearDamping: 0.2,
@@ -206,6 +210,9 @@ function start() {
           {
             shapeType: 'box',
             shapeData: 0.5,
+            collisionFilter: {
+              collisionCategories: ['wall'],
+            },
           },
         ],
       },
@@ -213,7 +220,14 @@ function start() {
         name: 'barrier',
         animation: 'ground-colors',
         movementType: 'static',
-        fixtures: [{}],
+        fixtures: [
+          {
+            // Default shape.
+            collisionFilter: {
+              collisionCategories: ['wall'],
+            },
+          }
+        ],
       },
       {
         name: 'debris',
@@ -223,13 +237,20 @@ function start() {
       {
         name: 'weapon',
         animation: 'weapons',
-        movementType: 'static',
+        movementType: 'dynamic',
+        linearDamping: 0.8,
+        fixedRotation: true,
         fixtures: [
           {
             shapeType: 'box',
-            shapeData: 0.5,
+            shapeData: 0.9,
             properties: {
-              isSensor: true,
+              friction: 0,
+              restitution: 1,
+            },
+            collisionFilter: {
+              collisionCategories: ['weapon'],
+              onlyCollidesWith: ['wall'],
             },
           },
         ],
@@ -237,13 +258,39 @@ function start() {
       {
         name: 'modifier',
         animation: 'modifiers',
-        movementType: 'static',
+        movementType: 'dynamic',
+        linearDamping: 0.8,
+        fixedRotation: true,
+        fixtures: [
+          {
+            shapeType: 'box',
+            shapeData: 0.9,
+            properties: {
+              friction: 0,
+              restitution: 1,
+            },
+            collisionFilter: {
+              collisionCategories: ['modifier'],
+              onlyCollidesWith: ['wall'],
+            },
+          },
+        ],
+      },
+      {
+        name: 'disarmAnimation',
+        animation: 'modifiers',
+        movementType: 'kinematic',
+        fixedRotation: true,
         fixtures: [
           {
             shapeType: 'box',
             shapeData: 0.5,
             properties: {
               isSensor: true,
+            },
+            collisionFilter: {
+              collisionCategories: ['disarmAnimation'],
+              onlyCollidesWith: ['player'],
             },
           },
         ],
@@ -260,6 +307,8 @@ function onLoadComplete() {
 }
 
 function setup() {
+  world.playerCollisionMask = 1 << world.getOrAddCollisionCategory('player');
+
   world.allKinds['bullet'].beginContactActions['player'] = hitPlayer;
   world.allKinds['bullet'].beginContactActions['wall'] = hitWall;
   world.allKinds['bullet'].beginContactActions['barrier'] = hitBarrier;
@@ -268,6 +317,7 @@ function setup() {
   world.allKinds['player'].beginContactActions['weapon'] = collectWeapon;
   world.allKinds['player'].beginContactActions['modifier'] = collectModifier;
   world.allKinds['deflection'].beginContactActions['bullet'] = deflectionBullet;
+  world.allKinds['disarmAnimation'].beginContactActions['player'] = disarmAnimationPlayer;
 
   // Create initial Things.
   world.newThing('barrier', { position: [40, -1], scale: [82, 1] });
@@ -521,28 +571,34 @@ function collectWeapon(player, weapon) {
   if (weapon.actor.getFrame() > 1) {
     var weaponIndex = weapon.actor.getFrame();
     player.weapon = weaponIndex;
-    var explosion = world.newThing('zoom', {
-      position: weapon.body.GetPosition(),
-      animation: 'weapons',
-      depth: 1,
-      alpha: 0.5,
-    });
-    explosion.actor.setFrame(weaponIndex);
-    weapon.destroy();
-    totalWeapons--;
+    destroyWeapon(weapon);
   }
+}
+
+function destroyWeapon(weapon) {
+  if (weapon.destroyed)
+    return;
+
+  let explosion = world.newThing('zoom', {
+    position: weapon.body.GetPosition(),
+    animation: 'weapons',
+    depth: 1,
+    alpha: 0.5,
+  });
+  explosion.actor.setFrame(weapon.actor.getFrame());
+  weapon.destroy();
+  totalWeapons--;
 }
 
 function collectModifier(player, modifier) {
   if (modifier.destroyed)
     return;
 
-  if (modifier.actor.getFrame() > 1 && player.modifier == 0) {
-    var modifierIndex = modifier.actor.getFrame();
-    player.modifier = modifierIndex;
-    player.modifierTime = 1800;
-    var explosion = world.newThing('zoom', {
-      position: modifier.body.GetPosition(),
+  const modifierIndex = modifier.actor.getFrame();
+  if (modifierIndex > 1 && player.modifier == 0) {
+    const modifierPosition = modifier.body.GetPosition();
+    let explosion = world.newThing('zoom', {
+      position: modifierPosition,
       animation: 'modifiers',
       depth: 1,
       alpha: 0.5,
@@ -550,6 +606,22 @@ function collectModifier(player, modifier) {
     explosion.actor.setFrame(modifierIndex);
     modifier.destroy();
     totalModifiers--;
+
+    if (modifierIndex == 5) {
+      world.allKinds['weapon'].forEachThing(function (thing) {
+        destroyWeapon(thing);
+      });
+      world.allKinds['player'].forEachThing(function (targetPlayer) {
+        if (targetPlayer == player) return;
+
+        let disarmAnimation = world.newThing('disarmAnimation', { alpha: 0, position: modifierPosition });
+        disarmAnimation.actor.setFrame(5);
+        disarmAnimation.player = targetPlayer;
+      });
+    } else {
+      player.modifier = modifierIndex;
+      player.modifierTime = 1800;
+    }
 
     if (!player.modifierIcon) {
       if (modifierIndex == 3) {
@@ -561,8 +633,8 @@ function collectModifier(player, modifier) {
           'blank', { animation: 'explosion', scale: [0.1, 0.1], depth: 1, position: player.body.GetPosition() });
         player.modifierIcon.actor.setFrame(player.index);
       }
+      drawModifiers(player);
     }
-    drawModifiers(player);
   }
 }
 
@@ -585,6 +657,26 @@ function deflectionBullet(deflection, bullet) {
   }
 }
 
+function disarmAnimationPlayer(disarmAnimation, player) {
+  if (player != disarmAnimation.player) return;
+
+  let velocity = disarmAnimation.body.GetLinearVelocity().Clone();
+  velocity.SelfNormalize();
+  velocity.SelfMul(10);
+  if (player.weapon != 1) {
+    var thing = world.newThing('weapon', {
+      position: player.body.GetPosition(),
+      velocity: velocity,
+      depth: 1,
+    });
+    thing.actor.setFrame(player.weapon);
+    totalWeapons++;
+    player.weapon = 1;
+  }
+  makeDebris(0.6, disarmAnimation.body.GetPosition(), new box2d.b2Vec2(), 0, 10, 'modifiers');
+  disarmAnimation.destroy();
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // Loop
 
@@ -594,6 +686,7 @@ function duringGame() {
     dropWeapons();
     dropModifiers();
     aimMissiles();
+    aimDisarmAnimations();
     players.forEach(function (player, index) {
       if (player.destroyed)
         return;
@@ -634,7 +727,7 @@ function dropWeapons() {
     weaponDropInitial--;
   } else if (totalWeapons == 0 || weaponDrop >= 600 && totalWeapons < totalPlayers) {
     weaponDrop = 0;
-    spawn('weapon');
+    spawn('weapon', randomDirection());
     totalWeapons++;
   }
   weaponDrop++;
@@ -646,25 +739,36 @@ function dropModifiers() {
     modifierDropInitial--;
   } else if (totalModifiers == 0 || modifierDrop >= 600 && totalModifiers < totalPlayers) {
     modifierDrop = 0;
-    spawn('modifier');
+    spawn('modifier', randomDirection());
     totalModifiers++;
   }
   modifierDrop++;
   world.allKinds['modifier'].forEachThing(spawnAnimation);
 }
 
-function spawn(name) {
+function randomDirection() {
+  const angle = 2 * Math.PI * Math.random();
+  return new box2d.b2Vec2(10 * Math.cos(angle), 10 * Math.sin(angle));
+}
+
+function spawn(name, velocity) {
   var emptyTile = emptyTiles[(emptyTiles.length * Math.random()) | 0];
   var thing = world.newThing(name, {
     position: [emptyTile[0], emptyTile[1]],
+    velocity: velocity,
     depth: 1,
-  });;
+  });
   thing.actor.alpha = 0.03;
 }
 
 function spawnAnimation(thing) {
-  if (thing.actor.getFrame() != 0)
+  if (thing.actor.getFrame() != 0) {
+    // Let disarmed weapons collide with players once they slow down.
+    if (thing.body.m_fixtureList.m_filter.maskBits & world.playerCollisionMask == 0 && thing.body.GetLinearVelocity().GetLengthSquared < 1) {
+      thing.body.m_fixtureList.m_filter.maskBits |= world.playerCollisionMask;
+    }
     return;
+  }
 
   var angle = thing.body.GetAngleRadians();
   if (angle < 10 * Math.PI) {
@@ -674,10 +778,12 @@ function spawnAnimation(thing) {
     thing.actor.alpha = 1;
     thing.body.SetAngleRadians(10 * Math.PI);
     if (thing.kind.name == 'modifier') {
-      thing.actor.setFrame((2 + 3 * Math.random()) | 0);
+      thing.actor.setFrame((2 + 4 * Math.random()) | 0);
     } else {
       thing.actor.setFrame((2 + 4 * Math.random()) | 0);
     }
+    // It can now collide with players.
+    thing.body.m_fixtureList.m_filter.maskBits |= world.playerCollisionMask;
   }
 }
 
@@ -743,6 +849,21 @@ function changeVelocityToMatchAngle(body) {
   delta.SelfMul(60);
   delta.SelfMul(body.m_mass);
   body.ApplyForceToCenter(delta);
+}
+
+function aimDisarmAnimations() {
+  world.allKinds['disarmAnimation'].forEachThing(function (thing) {
+    let delta = thing.player.body.GetPosition();
+    delta.SelfSub(thing.body.GetPosition());
+    // Make it fade and zoom in as it gets close to player.
+    thing.actor.alpha = 0.8 - delta.GetLength() / 20;
+    const scale = 1 + delta.GetLength() / 5;
+    thing.actor.scaleX = scale;
+    thing.actor.scaleY = scale;
+    delta.SelfNormalize();
+    delta.SelfMul(30);
+    thing.body.SetLinearVelocity(delta);
+  });
 }
 
 function trail(player, index) {
