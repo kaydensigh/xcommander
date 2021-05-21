@@ -167,6 +167,11 @@
         .p4 {
             background-color: rgb(255, 122, 250);
         }
+
+        .game-option {
+            width: 20px;
+            height: 20px;
+        }
     </style>
 </head>
 <body class="fill">
@@ -293,11 +298,43 @@
                 </div>
                 <div id="gamepadMessage">Press a button on a connected gamepad to enable it.</div>
             </div>
-            <div class="column buttons">
-                <button id="2Players">2 players</button>
-                <button id="3Players">3 players</button>
-                <button id="4Players">4 players</button>
-                <button id="start"><h1>Start</h1></button>
+            <div class="column">
+                <div class="column buttons">
+                    <button id="2Players">2 players</button>
+                    <button id="3Players">3 players</button>
+                    <button id="4Players">4 players</button>
+                    <button id="start"><h1>Start</h1></button>
+                </div>
+                <div class="row">
+                    <div class="column">
+                        <span class="align-items-center">
+                            <img class="game-option" src="sprites/multishot.png" /><input type="checkbox" id="multishot" />
+                        </span>
+                        <span class="align-items-center">
+                            <img class="game-option" src="sprites/grenade.png" /><input type="checkbox" id="grenade" />
+                        </span>
+                        <span class="align-items-center">
+                            <img class="game-option" src="sprites/missile.png" /><input type="checkbox" id="missile" />
+                        </span>
+                        <span class="align-items-center">
+                            <img class="game-option" src="sprites/laser.png" /><input type="checkbox" id="laser" />
+                        </span>
+                    </div>
+                    <div class="column">
+                        <span class="align-items-center">
+                            <input type="checkbox" id="sideshot" /><img class="game-option" src="sprites/sideshot.png" />
+                        </span>
+                        <span class="align-items-center">
+                            <input type="checkbox" id="deflect" /><img class="game-option" src="sprites/deflect.png" />
+                        </span>
+                        <span class="align-items-center">
+                            <input type="checkbox" id="charge" /><img class="game-option" src="sprites/charge.png" />
+                        </span>
+                        <span class="align-items-center">
+                            <input type="checkbox" id="disarm" /><img class="game-option" src="sprites/disarm.png" />
+                        </span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

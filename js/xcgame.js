@@ -11,6 +11,22 @@ var backgroundCanvasContext = document.getElementById('background').getContext('
 var world;
 var players = [];
 var totalPlayers = 0;
+let enabledWeapons = [];
+let enabledModifiers = [];
+for (const [o, v] of getOptions().entries()) {
+  if (v) {
+    switch (o) {
+      case 'multishot': enabledWeapons.push(2); break;
+      case 'grenade': enabledWeapons.push(3); break;
+      case 'missile': enabledWeapons.push(4); break;
+      case 'laser': enabledWeapons.push(5); break;
+      case 'sideshot': enabledModifiers.push(2); break;
+      case 'deflect': enabledModifiers.push(3); break;
+      case 'charge': enabledModifiers.push(4); break;
+      case 'disarm': enabledModifiers.push(5); break;
+    }
+  }
+}
 
 var viewSize = [80, 60];
 var centerX = 39.5, centerY = 29.5;
@@ -779,9 +795,9 @@ function spawnAnimation(thing) {
     thing.actor.alpha = 1;
     thing.body.SetAngleRadians(10 * Math.PI);
     if (thing.kind.name == 'modifier') {
-      thing.actor.setFrame((2 + 4 * Math.random()) | 0);
+      thing.actor.setFrame(enabledModifiers[enabledModifiers.length * Math.random() | 0]);
     } else {
-      thing.actor.setFrame((2 + 4 * Math.random()) | 0);
+      thing.actor.setFrame(enabledWeapons[enabledWeapons.length * Math.random() | 0]);
     }
     // It can now collide with players.
     thing.body.m_fixtureList.m_filter.maskBits |= world.playerCollisionMask;

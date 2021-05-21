@@ -12,8 +12,9 @@ function urlFromMapData(data) {
 }
 
 function mapDataFromURL(urlData) {
-  var data = new Array(urlData.length * 2);
-  for (var i = 0; i < urlData.length; i++) {
+  let data = new Array(80 * 60);
+  data.fill(0);
+  for (var i = 0; i < urlData.length && i < 2400; i++) {
     var c = urlData.charCodeAt(i);
     var v = base64codeToValue(c);
     data[2 * i] = v >> 3;
@@ -228,6 +229,44 @@ function updateKeyMappings(keyMap) {
   for (const p of keyMap) keys.push(p.forward, p.left, p.right);
   url.searchParams.set('k', keys.join(' '));
   window.history.replaceState({ path: url.href }, '', url.href);
+}
+
+const weaponOptions = ['multishot', 'grenade', 'missile', 'laser'];
+const modifierOptions = ['sideshot', 'deflect', 'charge', 'disarm'];
+
+function setOption(name, enabled) {
+  const opts = url.searchParams.get('o') || '1111 0000';
+  let sopts = opts.split(' ');
+  sopts[0] = sopts[0].split('');
+  sopts[1] = sopts[1].split('');
+  const value = enabled ? '1' : '0';
+
+  const woIndex = weaponOptions.indexOf(name);
+  const moIndex = modifierOptions.indexOf(name);
+  if (woIndex != -1) {
+    sopts[0][woIndex] = value;
+  } else if (moIndex != -1) {
+    sopts[1][moIndex] = value;
+  } else {
+    console.log('Invalid option: ' + name);
+  }
+
+  const newOpts = [sopts[0].join(''), sopts[1].join('')].join(' ');
+  url.searchParams.set('o', newOpts);
+  window.history.replaceState({ path: url.href }, '', url.href);
+}
+
+function getOptions() {
+  const opts = url.searchParams.get('o') || '1111 0000';
+  const sopts = opts.split(' ');
+  let optMap = new Map()
+  for (let [i, o] of sopts[0].split('').entries()) {
+    optMap.set(weaponOptions[i], o != '0');
+  }
+  for (let [i, o] of sopts[1].split('').entries()) {
+    optMap.set(modifierOptions[i], o != '0');
+  }
+  return optMap;
 }
 
 function startGame() {

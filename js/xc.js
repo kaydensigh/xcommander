@@ -364,6 +364,17 @@ window.addEventListener('keydown', function (e) {
   return false;
 });
 
+function setOptionHandler(e) {
+  setOption(e.target.id, e.target.checked);
+}
+
+function setupOptions() {
+  let opts = getOptions();
+  for (const [o, v] of opts.entries()) {
+    document.getElementById(o).checked = v;
+  }
+}
+
 var title = document.getElementById('title');
 var author = document.getElementById('author');
 var exportLink = document.getElementById('exportLink');
@@ -391,6 +402,14 @@ document.getElementById('2Players').addEventListener('click', selectPlayers);
 document.getElementById('3Players').addEventListener('click', selectPlayers);
 document.getElementById('4Players').addEventListener('click', selectPlayers);
 document.getElementById('start').addEventListener('click', startGame);
+document.getElementById('multishot').addEventListener('change', setOptionHandler);
+document.getElementById('grenade').addEventListener('change', setOptionHandler);
+document.getElementById('missile').addEventListener('change', setOptionHandler);
+document.getElementById('laser').addEventListener('change', setOptionHandler);
+document.getElementById('sideshot').addEventListener('change', setOptionHandler);
+document.getElementById('deflect').addEventListener('change', setOptionHandler);
+document.getElementById('charge').addEventListener('change', setOptionHandler);
+document.getElementById('disarm').addEventListener('change', setOptionHandler);
 
 var gamepadManager = new Gamepad();
 gamepadManager.init();
@@ -399,3 +418,4 @@ gamepadManager.bind(Gamepad.Event.DISCONNECTED, setupPlayers);
 
 loadMapFromURL();
 setupPlayers();
+setupOptions();
