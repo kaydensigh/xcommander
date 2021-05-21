@@ -620,7 +620,7 @@ function collectModifier(player, modifier) {
       });
     } else {
       player.modifier = modifierIndex;
-      player.modifierTime = 1800;
+      player.modifierTime = 900;
     }
 
     if (!player.modifierIcon) {
@@ -651,7 +651,7 @@ function deflectionBullet(deflection, bullet) {
     let normal = bullet.body.GetPosition().Clone();
     normal.SelfSub(deflection.body.GetPosition());
     normal.SelfNormalize();
-    let impulse = 2 * bullet.body.m_mass * bullet.body.GetLinearVelocity().Dot(normal);
+    let impulse = -2 * bullet.body.m_mass * bullet.body.GetLinearVelocity().Dot(normal);
     normal.SelfMul(impulse);
     bullet.body.ApplyLinearImpulse(normal, bullet.body.GetPosition());
   }
@@ -764,7 +764,8 @@ function spawn(name, velocity) {
 function spawnAnimation(thing) {
   if (thing.actor.getFrame() != 0) {
     // Let disarmed weapons collide with players once they slow down.
-    if (thing.body.m_fixtureList.m_filter.maskBits & world.playerCollisionMask == 0 && thing.body.GetLinearVelocity().GetLengthSquared < 1) {
+    const collidesWithPlayer = thing.body.m_fixtureList.m_filter.maskBits & world.playerCollisionMask;
+    if (!collidesWithPlayer && thing.body.GetLinearVelocity().GetLengthSquared() < 1) {
       thing.body.m_fixtureList.m_filter.maskBits |= world.playerCollisionMask;
     }
     return;
@@ -933,7 +934,7 @@ function drawModifiers(player, index) {
 function aimLaser(player, index) {
   let actor = player.laser.actor;
   let body = player.laser.body;
-  if (player.weapon != 5 || (player.modifier == 4 && player.chargeDown == 0)) {
+  if (player.weapon != 5 || (player.modifier == 4 && player.chargeDown <= 0)) {
     actor.alpha = 0;
     return;
   }
@@ -1090,7 +1091,7 @@ var weapons = [
       player.shootTime = 30;
       // If charging, charge up instead of shooting.
       // Once charged, shoot 3 times in quick succession.
-      if (player.modifier == 4 && player.chargeUp < 3 && player.chargeDown == 0) {
+      if (player.modifier == 4 && player.chargeUp < 3 && player.chargeDown <= 0) {
         player.chargeUp++;
         if (player.chargeUp >= 3) {
           player.chargeUp = 0;
@@ -1110,7 +1111,7 @@ var weapons = [
       player.shootTime = 60;
       let arc = 1;
       // Once charged, shoot a wider arc followed by a regular.
-      if (player.modifier == 4 && player.chargeUp < 3 && player.chargeDown == 0) {
+      if (player.modifier == 4 && player.chargeUp < 3 && player.chargeDown <= 0) {
         player.chargeUp++;
         player.shootTime = 45;
         if (player.chargeUp >= 3) {
@@ -1134,7 +1135,7 @@ var weapons = [
       player.shootTime = 60;
       let arc = 0;
       // Once charged, shoot 5 simutaneously.
-      if (player.modifier == 4 && player.chargeUp < 3 && player.chargeDown == 0) {
+      if (player.modifier == 4 && player.chargeUp < 3 && player.chargeDown <= 0) {
         player.chargeUp++;
         if (player.chargeUp >= 3) {
           player.chargeUp = 0;
@@ -1155,7 +1156,7 @@ var weapons = [
     shoot: function (player, index) {
       player.shootTime = 60;
       // Once charged, shoot 5 times in quick succession.
-      if (player.modifier == 4 && player.chargeUp < 3 && player.chargeDown == 0) {
+      if (player.modifier == 4 && player.chargeUp < 3 && player.chargeDown <= 0) {
         player.chargeUp++;
         if (player.chargeUp >= 3) {
           player.chargeUp = 0;
@@ -1174,7 +1175,7 @@ var weapons = [
     shoot: function (player, index) {
       player.shootTime = 15;
       // Charge for 120, then shoot for 80 at 3x rate.
-      if (player.modifier == 4 && player.chargeUp < 2 && player.chargeDown == 0) {
+      if (player.modifier == 4 && player.chargeUp < 2 && player.chargeDown <= 0) {
         player.chargeUp += 0.25;
         if (player.chargeUp >= 2) {
           player.chargeUp = 0;
