@@ -739,6 +739,8 @@ function countDownToStart() {
 }
 
 function dropWeapons() {
+  if (enabledWeapons.length == 0) return;
+
   if (weaponDropInitial > 0) {
     weaponDropInitial--;
   } else if (totalWeapons == 0 || weaponDrop >= 600 && totalWeapons < totalPlayers) {
@@ -751,6 +753,8 @@ function dropWeapons() {
 }
 
 function dropModifiers() {
+  if (enabledModifiers.length == 0) return;
+
   if (modifierDropInitial > 0) {
     modifierDropInitial--;
   } else if (totalModifiers == 0 || modifierDrop >= 600 && totalModifiers < totalPlayers) {
