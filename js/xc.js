@@ -129,7 +129,7 @@ function getCanvasAsPng() {
 
 // Load a built-in map.
 function selectMap(event) {
-  var img = event.toElement.children[0];
+  var img = event.target.children[0];
 
   var fileName = decodeURI(img.src).match(/.*\/([^\/]+)\.\w\w\w$/)[1];
   var parts = (fileName + '  ').split('  ');
